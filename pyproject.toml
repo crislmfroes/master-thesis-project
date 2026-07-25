@@ -20,6 +20,4 @@ nvidia-curobo = { git = "https://github.com/NVlabs/curobo.git" }
 lerobot = { workspace = true }
 
 [tool.uv.workspace]
-members = [
-    "thirdparty/lerobot",
-]
+members = []
