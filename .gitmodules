@@ -1,0 +1,15 @@
+[submodule "thirdparty/Isaac-GR00T"]
+	path = thirdparty/Isaac-GR00T
+	url = https://github.com/NVIDIA/Isaac-GR00T.git
+[submodule "thirdparty/LIBERO"]
+	path = thirdparty/LIBERO
+	url = https://github.com/Lifelong-Robot-Learning/LIBERO.git
+[submodule "thirdparty/polaris"]
+	path = thirdparty/polaris
+	url = https://github.com/arhanjain/polaris.git
+[submodule "thirdparty/GraspGenX"]
+	path = thirdparty/GraspGenX
+	url = https://github.com/NVlabs/GraspGenX.git
+[submodule "thirdparty/IsaacLab-Arena"]
+	path = thirdparty/IsaacLab-Arena
+	url = https://github.com/isaac-sim/IsaacLab-Arena.git
