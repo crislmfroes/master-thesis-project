@@ -1,0 +1,25 @@
+[project]
+name = "mestrado-cris"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "lerobot[dataset,evo1,libero,pi,robocasa,training]",
+    "numpy",
+    "nvidia-curobo",
+    "omegaconf",
+    "rospkg>=1.6.1",
+    "smolagents",
+    "torch",
+    "torchvision",
+]
+
+[tool.uv.sources]
+nvidia-curobo = { git = "https://github.com/NVlabs/curobo.git" }
+lerobot = { workspace = true }
+
+[tool.uv.workspace]
+members = [
+    "thirdparty/lerobot",
+]
