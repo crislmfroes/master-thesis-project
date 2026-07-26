@@ -199,7 +199,7 @@ class LiberoEnv:
         """
         print('GET OBS')
         img = Image.fromarray(cv2.resize(self.obs['pixels']['image'][0][::-1,::-1,:].copy(), (448, 448)))
-        img.save('debug.jpg')
+        #img.save('debug.jpg')
         return_message = [
             {
                 "type": "text",
