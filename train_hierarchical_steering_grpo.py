@@ -73,6 +73,7 @@ class LiberoEnv:
         self.task_reward = 0.0
         self.stage_reward = 0.0
         self.initial_obs = deepcopy(self.obs)
+        self.last_checkpoint = deepcopy(self.initial_obs)
         self.last_action = np.zeros((1, 7))
         self.frames = []
         print('TASK:', self._get_libero_task_description())
@@ -294,6 +295,46 @@ class LiberoEnv:
                 self.last_action[0, 3] = 0.0
                 self.last_action[0, 4] = 0.0
                 self.last_action[0, 5] = 0.0
+            self.last_action[0, 6] = -1.0
+            obs, reward, terminated, truncated, info = self.env[self.task_suite][self.task_id].step(self.last_action)
+            self._get_current_observation()
+            self.obs = obs
+            self.info = info
+            print(terminated)
+            print(truncated)
+            print(info)
+            if terminated[0] or truncated[0] or self.info['is_success'][0]:
+                break
+            prev_pos_error = pos_error
+            prev_rot_error = rot_error
+            current_position = self.obs["robot_state"]["eef"]["pos"][0]
+            current_rotation = self._mat2euler(self.obs["robot_state"]["eef"]["mat"][0])
+        return self._get_current_observation()
+    
+    def _return_to_last_checkpoint(self)->list:
+        print('RETURN TO CHECKPOINT')
+        target_position = self.last_checkpoint["robot_state"]["eef"]["pos"][0]
+        current_position = self.obs["robot_state"]["eef"]["pos"][0]
+        target_rotation = self._mat2euler(np.array(self.last_checkpoint["robot_state"]["eef"]["mat"][0]))
+        current_rotation = self._mat2euler(np.array(self.obs["robot_state"]["eef"]["mat"][0]))
+        kp = 100.0
+        kd = 10.0
+        dt = 0.002
+        prev_pos_error = 0.0
+        prev_rot_error = 0.0
+        for timestep in range(20): #while np.linalg.norm(target_position - current_position) > 0.05 or np.linalg.norm(target_rotation - current_rotation) > 0.05:
+            pos_error = timestep*(target_position - current_position)/150.0
+            rot_error = timestep*(target_rotation - current_rotation)/150.0
+            pos_derivative = (pos_error - prev_pos_error) / dt
+            rot_derivative = (rot_error - prev_rot_error) / dt
+            pos_output = (kp * pos_error) + (kd * pos_derivative)
+            rot_output = (kp * rot_error) + (kd * rot_derivative)
+            pos_action = pos_output - current_position
+            rot_action = rot_output - current_rotation
+            self.last_action[0, :3] = pos_action
+            self.last_action[0, 3] = 0.0
+            self.last_action[0, 4] = 0.0
+            self.last_action[0, 5] = 0.0
             self.last_action[0, 6] = -1.0
             obs, reward, terminated, truncated, info = self.env[self.task_suite][self.task_id].step(self.last_action)
             self._get_current_observation()
@@ -532,9 +573,10 @@ class LiberoEnv:
                 stage_reward += rm_result[1]
                 if rm_result[1] > last_reward:
                     last_reward = rm_result[1]
+                    self.last_checkpoint = deepcopy(self.obs)
                 else:
                     self._open_gripper()
-                    self.return_to_home_position()
+                    self._return_to_last_checkpoint()
                     self.policy.reset()
                     self.frames += frames
                     frames.clear()
