@@ -579,13 +579,7 @@ class LiberoEnv:
                     last_reward = rm_result[1]
                     self.last_checkpoint = deepcopy(self.obs)
                 else:
-                    self._open_gripper()
-                    self.return_to_home_position()
-                    self.policy.reset()
-                    self.frames += frames
-                    frames.clear()
-                    stage_reward = 0.0
-                    last_reward = 0.0
+                    break
             obs = self.policy_preprocessor({
                 "observation.images.image": obs["observation.images.image"],
                 "observation.images.image2": obs["observation.images.image2"],
