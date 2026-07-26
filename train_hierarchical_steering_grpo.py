@@ -30,8 +30,8 @@ import re
 
 random.seed(123)
 
-#policy_path = "crislmfroes/smolvla-libero-90"
-policy_path = "lerobot/smolvla_libero"
+policy_path = "crislmfroes/smolvla-libero-90"
+#policy_path = "lerobot/smolvla_libero"
 #policy = SmolVLAPolicy.from_pretrained(pretrained_name_or_path=policy_path)
 #policy = policy.cpu()
 #policy.config.device = 'cpu'
@@ -644,7 +644,7 @@ def preprocess_dataset():
                     ]
                 }
             ],
-            "task_suite": "libero_90",
+            "task_suite": "libero_10",
             "task_id": random.choice(list(range(1))),
             "seed": seed
         } for seed in range(1000)
@@ -699,7 +699,7 @@ def main():
             pad_token_id=processor.tokenizer.pad_token_id
         ),
         chat_template_kwargs=dict(
-            enable_thinking=True,
+            enable_thinking=False,
         ),
         max_completion_length=64*(500/20),
         use_liger_kernel=False,
