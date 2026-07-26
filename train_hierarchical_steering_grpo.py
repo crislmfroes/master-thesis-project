@@ -144,8 +144,11 @@ class LiberoEnv:
     
     def get_reward(self)->float:
         #self._unload_vla_policy()
-        rm_result = self._compute_reward_model(prompt=self._get_libero_task_description(), is_subtask=False, frames=torch.as_tensor(np.concatenate(self.frames, axis=0)).unsqueeze(0))
-        reward = 100.0*self.task_reward + 10.0*rm_result[1] + self.stage_reward # + 0.5*self._compute_reward_model(self._get_libero_task_description(), is_subtask=False)[1] + 0.5*self.subtask_reward
+        if len(self.frames) > 0:
+            rm_result = self._compute_reward_model(prompt=self._get_libero_task_description(), is_subtask=False, frames=torch.as_tensor(np.concatenate(self.frames, axis=0)).unsqueeze(0))
+        else:
+            rm_result = (False, 0.0)
+        reward = 100.0*self.task_reward + 10.0*rm_result[1]# + self.stage_reward # + 0.5*self._compute_reward_model(self._get_libero_task_description(), is_subtask=False)[1] + 0.5*self.subtask_reward
         self.prev_obs = deepcopy(self.obs)
         #self._unload_reward_model()
         return reward
