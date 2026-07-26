@@ -7,7 +7,7 @@ from lerobot.envs.factory import make_env, make_env_pre_post_processors, make_en
 from lerobot.envs.libero import LiberoEnv as LeRobotLiberoEnv
 from lerobot.policies.factory import make_pre_post_processors
 from lerobot.policies.smolvla.modeling_smolvla import SmolVLAPolicy
-from lerobot.policies.pi05.modeling_pi05 import PI05Policy
+from lerobot.policies.pi05.modeling_pi05 import PI05Policy, PI05Config
 from lerobot.rewards.topreward.modeling_topreward import TOPRewardConfig, TOPRewardModel
 from lerobot.rewards.topreward.processor_topreward import TOPRewardEncoderProcessorStep
 from lerobot.rewards.topreward.configuration_topreward import PolicyFeature
@@ -91,7 +91,9 @@ class LiberoEnv:
     def _load_vla_policy(self):
         global policy
         if policy == None:
-            policy = PI05Policy.from_pretrained(pretrained_name_or_path=policy_path)
+            policy_config = PI05Config.from_pretrained(pretrained_name_or_path=policy_path)
+            policy_config.device = "cuda:1"
+            policy = PI05Policy.from_pretrained(pretrained_name_or_path=policy_path, config=policy_config)
             policy.config.n_action_steps = 1
         policy_preprocessor, policy_postprocessor = make_pre_post_processors(policy_cfg=policy.config, pretrained_path=policy_path)
         self.policy = policy
@@ -116,7 +118,7 @@ class LiberoEnv:
                     "observation.images.top": PolicyFeature(type="VISUAL", shape=(256, 256, 3))
                 },
                 #vlm_name='Qwen/Qwen3-VL-2B-Instruct',
-                device='cuda',
+                device='cuda:1',
                 image_key='observation.images.top',
             )
             reward_model = RobometerRewardModel.from_pretrained(pretrained_name_or_path="lerobot/Robometer-4B", config=reward_model_config)
