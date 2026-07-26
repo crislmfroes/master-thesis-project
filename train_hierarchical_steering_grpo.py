@@ -700,9 +700,9 @@ def main():
             pad_token_id=processor.tokenizer.pad_token_id
         ),
         chat_template_kwargs=dict(
-            enable_thinking=True,
+            enable_thinking=False,
         ),
-        max_completion_length=64*(500/20),
+        #max_completion_length=64*(500/20),
         use_liger_kernel=False,
         
         # GRPO Specific configuration settings
