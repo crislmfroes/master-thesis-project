@@ -601,9 +601,9 @@ class LiberoEnv:
         self.frames += frames
         self._get_current_observation()
         #self._unload_vla_policy()
-        rm_result = self._compute_reward_model(prompt=subtask, is_subtask=True, frames=torch.as_tensor(np.concatenate(frames, axis=0)).unsqueeze(0))
-        success = rm_result[0]
-        progress = rm_result[1]*100.0
+        #rm_result = self._compute_reward_model(prompt=subtask, is_subtask=True, frames=torch.as_tensor(np.concatenate(frames, axis=0)).unsqueeze(0))
+        #success = rm_result[0]
+        #progress = rm_result[1]*100.0
         #self.subtask_reward += reward
         self.prev_obs = deepcopy(self.obs)
         '''if (success == False and not (terminated[0] or truncated[0] or self.info['is_success'][0])) and (max_retries > 0):
@@ -612,10 +612,10 @@ class LiberoEnv:
             return return_val'''
         return [
             *self._get_current_observation(),
-            {
-                "type": "text",
-                "text": f"Subtask completed: {success}. Subtask progress: {progress:.2f}%"
-            }
+            #{
+            #    "type": "text",
+            #    "text": f"Subtask completed: {success}. Subtask progress: {progress:.2f}%"
+            #}
         ]
 
 
@@ -695,7 +695,7 @@ def main():
             pad_token_id=processor.tokenizer.pad_token_id
         ),
         chat_template_kwargs=dict(
-            enable_thinking=True,
+            enable_thinking=False,
         ),
         max_completion_length=64*(500/20),
         use_liger_kernel=False,
