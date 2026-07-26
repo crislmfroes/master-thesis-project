@@ -533,7 +533,13 @@ class LiberoEnv:
                 if rm_result[1] > last_reward:
                     last_reward = rm_result[1]
                 else:
-                    break
+                    self._open_gripper()
+                    self.return_to_home_position()
+                    self.policy.reset()
+                    self.frames += frames
+                    frames.clear()
+                    stage_reward = 0.0
+                    last_reward = 0.0
             obs = self.policy_preprocessor({
                 "observation.images.top": obs["observation.images.image"],
                 "observation.images.wrist_image": obs["observation.images.image2"],
