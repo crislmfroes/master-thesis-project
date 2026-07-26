@@ -71,8 +71,10 @@ class LiberoEnv:
         self.info = info
         self.subtask_reward = 0.0
         self.task_reward = 0.0
+        self.stage_reward = 0.0
         self.initial_obs = deepcopy(self.obs)
         self.last_action = np.zeros((1, 7))
+        self.frames = []
         print('TASK:', self._get_libero_task_description())
         self._load_vla_policy()
         self._load_reward_model()
@@ -142,7 +144,8 @@ class LiberoEnv:
     
     def get_reward(self)->float:
         #self._unload_vla_policy()
-        reward = self.task_reward # + 0.5*self._compute_reward_model(self._get_libero_task_description(), is_subtask=False)[1] + 0.5*self.subtask_reward
+        rm_result = self._compute_reward_model(prompt=self._get_libero_task_description(), is_subtask=False, frames=torch.as_tensor(np.concatenate(self.frames, axis=0)).unsqueeze(0))
+        reward = 100.0*self.task_reward + 10.0*rm_result[1] + self.stage_reward # + 0.5*self._compute_reward_model(self._get_libero_task_description(), is_subtask=False)[1] + 0.5*self.subtask_reward
         self.prev_obs = deepcopy(self.obs)
         #self._unload_reward_model()
         return reward
@@ -176,7 +179,7 @@ class LiberoEnv:
         print(reward)
         #reward = torch.sum(reward).item()
         #success = reward >= 0.5
-        success = success.item() > 0.8
+        success = success.item() > 0.95
         #self._unload_reward_model()
         print(success, reward)
         return success, reward
@@ -515,6 +518,7 @@ class LiberoEnv:
         frames = []
         stage_success = False
         stage_reward = 0.0
+        last_reward = 0.0
         for i in range(max_steps):
             obs = preprocess_observation(observations=self.obs)
             obs = self.env_preprocessor(obs)
@@ -523,6 +527,10 @@ class LiberoEnv:
                 rm_result = self._compute_reward_model(prompt=subtask, is_subtask=True, frames=torch.as_tensor(np.concatenate(frames, axis=0)).unsqueeze(0))
                 stage_success = rm_result[0]
                 stage_reward += rm_result[1]
+                if rm_result[1] > last_reward:
+                    last_reward = rm_result[1]
+                else:
+                    break
             obs = self.policy_preprocessor({
                 "observation.images.image": obs["observation.images.image"],
                 "observation.images.image2": obs["observation.images.image2"],
@@ -542,8 +550,10 @@ class LiberoEnv:
             if terminated[0] or truncated[0] or self.info['is_success'][0] or stage_success:
                 break
         if self.info['is_success'][0] == True:
-            self.task_reward += 10.0
-        self.task_reward += stage_reward
+            self.task_reward += 1.0
+        self.stage_reward += stage_reward
+        #self.task_reward += stage_reward
+        self.frames += frames
         self._get_current_observation()
         #self._unload_vla_policy()
         #success, reward = self._compute_reward_model(prompt=self._get_libero_task_description(), is_subtask=True)
