@@ -6,7 +6,7 @@ from datasets import Dataset
 from lerobot.envs.factory import make_env, make_env_pre_post_processors, make_env_config
 from lerobot.envs.libero import LiberoEnv as LeRobotLiberoEnv
 from lerobot.policies.factory import make_pre_post_processors
-from lerobot.policies.smolvla.modeling_smolvla import SmolVLAPolicy
+from lerobot.policies.smolvla.modeling_smolvla import SmolVLAPolicy, SmolVLAConfig
 from lerobot.policies.pi05.modeling_pi05 import PI05Policy, PI05Config
 from lerobot.rewards.topreward.modeling_topreward import TOPRewardConfig, TOPRewardModel
 from lerobot.rewards.topreward.processor_topreward import TOPRewardEncoderProcessorStep
@@ -32,7 +32,7 @@ import re
 random.seed(123)
 
 #policy_path = "crislmfroes/smolvla-libero-90"
-policy_path = "lerobot/pi05_libero_finetuned_v044"
+policy_path = "lerobot/smolvla_libero"
 #policy = SmolVLAPolicy.from_pretrained(pretrained_name_or_path=policy_path)
 #policy = policy.cpu()
 #policy.config.device = 'cpu'
@@ -91,11 +91,11 @@ class LiberoEnv:
     def _load_vla_policy(self):
         global policy
         if policy == None:
-            policy_config = PI05Config(
-                device="cuda:1",
+            policy_config = SmolVLAConfig(
+                device="cuda",
                 n_action_steps=1
             )
-            policy = PI05Policy.from_pretrained(pretrained_name_or_path=policy_path, config=policy_config)
+            policy = SmolVLAPolicy.from_pretrained(pretrained_name_or_path=policy_path, config=policy_config)
         policy_preprocessor, policy_postprocessor = make_pre_post_processors(policy_cfg=policy.config, pretrained_path=policy_path)
         self.policy = policy
         self.policy_preprocessor = policy_preprocessor
@@ -119,7 +119,7 @@ class LiberoEnv:
                     "observation.images.top": PolicyFeature(type="VISUAL", shape=(256, 256, 3))
                 },
                 #vlm_name='Qwen/Qwen3-VL-2B-Instruct',
-                device='cuda:1',
+                device='cuda',
                 image_key='observation.images.top',
             )
             reward_model = RobometerRewardModel.from_pretrained(pretrained_name_or_path="lerobot/Robometer-4B", config=reward_model_config)
@@ -648,8 +648,8 @@ def preprocess_dataset():
                     ]
                 }
             ],
-            "task_suite": "libero_90",
-            "task_id": random.choice(list(range(1))),
+            "task_suite": "libero_10",
+            "task_id": random.choice(list(range(10))),
             "seed": seed
         } for seed in range(1000)
     ]
