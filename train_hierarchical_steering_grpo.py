@@ -177,7 +177,7 @@ class LiberoEnv:
         #reward = torch.sum(reward).item()
         #success = reward >= 0.5
         success = success.item() > 0.8
-        self._unload_reward_model()
+        #self._unload_reward_model()
         print(success, reward)
         return success, reward
     
