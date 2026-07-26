@@ -260,7 +260,7 @@ class LiberoEnv:
     def _mat2euler(self, mat: np.ndarray):
         return Rotation.from_matrix(matrix=mat).as_euler(seq="xyz")
     
-    def return_to_home_position(self)->list:
+    def _return_to_home_position(self)->list:
         """
         Return the end-effector of the robotic arm in the Libero environment to its initial position.
         """
@@ -695,7 +695,7 @@ def main():
             pad_token_id=processor.tokenizer.pad_token_id
         ),
         chat_template_kwargs=dict(
-            enable_thinking=False,
+            enable_thinking=True,
         ),
         max_completion_length=64*(500/20),
         use_liger_kernel=False,
