@@ -30,8 +30,8 @@ import re
 
 random.seed(123)
 
-#policy_path = "crislmfroes/smolvla-libero-90"
-policy_path = "lerobot/smolvla_libero"
+policy_path = "crislmfroes/smolvla-libero-90"
+#policy_path = "lerobot/smolvla_libero"
 #policy = SmolVLAPolicy.from_pretrained(pretrained_name_or_path=policy_path)
 #policy = policy.cpu()
 #policy.config.device = 'cpu'
@@ -532,8 +532,8 @@ class LiberoEnv:
                 else:
                     break
             obs = self.policy_preprocessor({
-                "observation.images.image": obs["observation.images.image"],
-                "observation.images.image2": obs["observation.images.image2"],
+                "observation.images.top": obs["observation.images.image"],
+                "observation.images.wrist_image": obs["observation.images.image2"],
                 "observation.state": obs["observation.state"],
                 "task": prompt
             })
