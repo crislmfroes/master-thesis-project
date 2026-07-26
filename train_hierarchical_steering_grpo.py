@@ -551,7 +551,7 @@ class LiberoEnv:
             subtask: The subtask to feed into the VLA model.
         """
         prompt = subtask
-        max_steps = 500
+        max_steps = 50
         max_retries = 0
         #self._open_gripper()
         #self.return_to_home_position()
@@ -568,21 +568,14 @@ class LiberoEnv:
             obs = self.env_preprocessor(obs)
             if i % 50 == 0:
                 frames.append(obs["observation.images.image"])
-                rm_result = self._compute_reward_model(prompt=subtask, is_subtask=True, frames=torch.as_tensor(np.concatenate(frames, axis=0)).unsqueeze(0))
+                '''rm_result = self._compute_reward_model(prompt=subtask, is_subtask=True, frames=torch.as_tensor(np.concatenate(frames, axis=0)).unsqueeze(0))
                 stage_success = rm_result[0]
                 stage_reward += rm_result[1]
                 if rm_result[1] > last_reward:
                     last_reward = rm_result[1]
                     self.last_checkpoint = deepcopy(self.obs)
                 else:
-                    '''self._open_gripper()
-                    self._return_to_last_checkpoint()
-                    self.policy.reset()
-                    self.frames += frames
-                    frames.clear()
-                    stage_reward = 0.0
-                    last_reward = 0.0'''
-                    break
+                    break'''
             obs = self.policy_preprocessor({
                 "observation.images.top": obs["observation.images.image"],
                 "observation.images.wrist_image": obs["observation.images.image2"],
@@ -608,7 +601,9 @@ class LiberoEnv:
         self.frames += frames
         self._get_current_observation()
         #self._unload_vla_policy()
-        #success, reward = self._compute_reward_model(prompt=self._get_libero_task_description(), is_subtask=True)
+        rm_result = self._compute_reward_model(prompt=subtask, is_subtask=True, frames=torch.as_tensor(np.concatenate(frames, axis=0)).unsqueeze(0))
+        success = rm_result[0]
+        progress = rm_result[1]*100.0
         #self.subtask_reward += reward
         self.prev_obs = deepcopy(self.obs)
         '''if (success == False and not (terminated[0] or truncated[0] or self.info['is_success'][0])) and (max_retries > 0):
@@ -617,10 +612,10 @@ class LiberoEnv:
             return return_val'''
         return [
             *self._get_current_observation(),
-            #{
-            #    "type": "text",
-            #    "text": f"Subtask completed: {success}"
-            #}
+            {
+                "type": "text",
+                "text": f"Subtask completed: {success}. Subtask progress: {progress:.2f}%"
+            }
         ]
 
 
