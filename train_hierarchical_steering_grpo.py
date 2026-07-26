@@ -32,7 +32,7 @@ import re
 random.seed(123)
 
 #policy_path = "crislmfroes/smolvla-libero-90"
-policy_path = "lerobot/pi05_libero"
+policy_path = "lerobot/pi05_libero_finetuned_v044"
 #policy = SmolVLAPolicy.from_pretrained(pretrained_name_or_path=policy_path)
 #policy = policy.cpu()
 #policy.config.device = 'cpu'
@@ -586,8 +586,8 @@ class LiberoEnv:
                     stage_reward = 0.0
                     last_reward = 0.0
             obs = self.policy_preprocessor({
-                "observation.images.top": obs["observation.images.image"],
-                "observation.images.wrist_image": obs["observation.images.image2"],
+                "observation.images.image": obs["observation.images.image"],
+                "observation.images.image2": obs["observation.images.image2"],
                 "observation.state": obs["observation.state"],
                 "task": prompt
             })
