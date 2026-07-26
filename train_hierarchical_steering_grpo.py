@@ -148,7 +148,7 @@ class LiberoEnv:
         return reward
     
     def _compute_reward_model(self, prompt: str, is_subtask=True, frames: torch.Tensor=None):
-        self._load_reward_model()
+        #self._load_reward_model()
         '''if is_subtask == True:
             prev_obs = preprocess_observation(observations=self.prev_obs)
         else:
