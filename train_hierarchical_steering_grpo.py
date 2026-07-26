@@ -597,7 +597,7 @@ def preprocess_dataset():
                 }
             ],
             "task_suite": "libero_10",
-            "task_id": random.choice(list(range(10))),
+            "task_id": random.choice(list(range(1))),
             "seed": seed
         } for seed in range(1000)
     ]
@@ -646,7 +646,7 @@ def main():
         learning_rate=5e-6,
         per_device_train_batch_size=1, # Adjust based on your VRAM
         gradient_accumulation_steps=4,
-        max_steps=1000,
+        max_steps=100,
         generation_kwargs=dict(
             pad_token_id=processor.tokenizer.pad_token_id
         ),
