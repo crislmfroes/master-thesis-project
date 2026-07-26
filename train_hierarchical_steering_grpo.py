@@ -91,10 +91,11 @@ class LiberoEnv:
     def _load_vla_policy(self):
         global policy
         if policy == None:
-            policy_config = PI05Config.from_pretrained(pretrained_name_or_path=policy_path)
-            policy_config.device = "cuda:1"
+            policy_config = PI05Config(
+                device="cuda:1",
+                n_action_steps=1
+            )
             policy = PI05Policy.from_pretrained(pretrained_name_or_path=policy_path, config=policy_config)
-            policy.config.n_action_steps = 1
         policy_preprocessor, policy_postprocessor = make_pre_post_processors(policy_cfg=policy.config, pretrained_path=policy_path)
         self.policy = policy
         self.policy_preprocessor = policy_preprocessor
