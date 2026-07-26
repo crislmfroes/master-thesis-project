@@ -581,8 +581,8 @@ class LiberoEnv:
                 else:
                     break
             obs = self.policy_preprocessor({
-                "observation.images.image": obs["observation.images.image"],
-                "observation.images.image2": obs["observation.images.image2"],
+                "observation.images.camera1": obs["observation.images.image"],
+                "observation.images.camera2": obs["observation.images.image2"],
                 "observation.state": obs["observation.state"],
                 "task": prompt
             })
