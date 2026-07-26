@@ -6,8 +6,7 @@ from datasets import Dataset
 from lerobot.envs.factory import make_env, make_env_pre_post_processors, make_env_config
 from lerobot.envs.libero import LiberoEnv as LeRobotLiberoEnv
 from lerobot.policies.factory import make_pre_post_processors
-from lerobot.policies.smolvla.modeling_smolvla import SmolVLAPolicy, SmolVLAConfig
-from lerobot.policies.pi05.modeling_pi05 import PI05Policy, PI05Config
+from lerobot.policies.smolvla.modeling_smolvla import SmolVLAPolicy
 from lerobot.rewards.topreward.modeling_topreward import TOPRewardConfig, TOPRewardModel
 from lerobot.rewards.topreward.processor_topreward import TOPRewardEncoderProcessorStep
 from lerobot.rewards.topreward.configuration_topreward import PolicyFeature
@@ -91,11 +90,8 @@ class LiberoEnv:
     def _load_vla_policy(self):
         global policy
         if policy == None:
-            policy_config = SmolVLAConfig(
-                device="cuda",
-                n_action_steps=1
-            )
-            policy = SmolVLAPolicy.from_pretrained(pretrained_name_or_path=policy_path, config=policy_config)
+            policy = SmolVLAPolicy.from_pretrained(pretrained_name_or_path=policy_path)
+            policy.config.n_action_steps = 1
         policy_preprocessor, policy_postprocessor = make_pre_post_processors(policy_cfg=policy.config, pretrained_path=policy_path)
         self.policy = policy
         self.policy_preprocessor = policy_preprocessor
@@ -579,10 +575,16 @@ class LiberoEnv:
                     last_reward = rm_result[1]
                     self.last_checkpoint = deepcopy(self.obs)
                 else:
-                    break
+                    self._open_gripper()
+                    self._return_to_last_checkpoint()
+                    self.policy.reset()
+                    self.frames += frames
+                    frames.clear()
+                    stage_reward = 0.0
+                    last_reward = 0.0
             obs = self.policy_preprocessor({
-                "observation.images.image": obs["observation.images.image"],
-                "observation.images.image2": obs["observation.images.image2"],
+                "observation.images.top": obs["observation.images.image"],
+                "observation.images.wrist_image": obs["observation.images.image2"],
                 "observation.state": obs["observation.state"],
                 "task": prompt
             })
@@ -642,8 +644,8 @@ def preprocess_dataset():
                     ]
                 }
             ],
-            "task_suite": "libero_10",
-            "task_id": random.choice(list(range(10))),
+            "task_suite": "libero_90",
+            "task_id": random.choice(list(range(1))),
             "seed": seed
         } for seed in range(1000)
     ]
@@ -697,9 +699,9 @@ def main():
             pad_token_id=processor.tokenizer.pad_token_id
         ),
         chat_template_kwargs=dict(
-            enable_thinking=False,
+            enable_thinking=True,
         ),
-        #max_completion_length=64*(500/20),
+        max_completion_length=64*(500/20),
         use_liger_kernel=False,
         
         # GRPO Specific configuration settings
