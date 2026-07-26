@@ -259,21 +259,21 @@ class LiberoEnv:
     def _mat2euler(self, mat: np.ndarray):
         return Rotation.from_matrix(matrix=mat).as_euler(seq="xyz")
     
-    def _return_to_home_position(self)->list:
+    def return_to_home_position(self)->list:
         """
-        Return the end-effector of the robotic arm in the Libero environment to its initial pose.
+        Return the end-effector of the robotic arm in the Libero environment to its initial position.
         """
         print('RETURN TO HOME')
         target_position = self.initial_obs["robot_state"]["eef"]["pos"][0]
         current_position = self.obs["robot_state"]["eef"]["pos"][0]
         target_rotation = self._mat2euler(np.array(self.initial_obs["robot_state"]["eef"]["mat"][0]))
         current_rotation = self._mat2euler(np.array(self.obs["robot_state"]["eef"]["mat"][0]))
-        kp = 1000.0
+        kp = 100.0
         kd = 10.0
         dt = 0.002
         prev_pos_error = 0.0
         prev_rot_error = 0.0
-        for timestep in range(150): #while np.linalg.norm(target_position - current_position) > 0.05 or np.linalg.norm(target_rotation - current_rotation) > 0.05:
+        for timestep in range(20): #while np.linalg.norm(target_position - current_position) > 0.05 or np.linalg.norm(target_rotation - current_rotation) > 0.05:
             pos_error = timestep*(target_position - current_position)/150.0
             rot_error = timestep*(target_rotation - current_rotation)/150.0
             pos_derivative = (pos_error - prev_pos_error) / dt
@@ -586,7 +586,7 @@ def preprocess_dataset():
                 {
                     "role": "system",
                     "content": [
-                        {"type": "text", "text": "You are the high level planner component of a hierarchical vision-language-action model controlling a robotic arm. DO NOT THINK AT ALL, and just execute tool calls."}
+                        {"type": "text", "text": "You are the high level planner component of a hierarchical vision-language-action model controlling a robotic arm."}
                     ]
                 },
                 {
@@ -651,9 +651,9 @@ def main():
             pad_token_id=processor.tokenizer.pad_token_id
         ),
         chat_template_kwargs=dict(
-            enable_thinking=False,
+            enable_thinking=True,
         ),
-        #max_completion_length=64*(500/20),
+        max_completion_length=64*(500/20),
         use_liger_kernel=False,
         
         # GRPO Specific configuration settings
