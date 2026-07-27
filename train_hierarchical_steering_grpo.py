@@ -555,7 +555,7 @@ class LiberoEnv:
             subtask: The subtask to feed into the VLA model.
         """
         prompt = subtask
-        max_steps = 500
+        max_steps = 50
         max_retries = 0
         #self._open_gripper()
         #self.return_to_home_position()
