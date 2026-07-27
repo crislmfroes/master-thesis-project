@@ -119,7 +119,7 @@ class LiberoEnv:
                 #vlm_name='Qwen/Qwen3-VL-2B-Instruct',
                 device='cuda',
                 image_key='observation.images.top',
-                torch_dtype="fp16"
+                torch_dtype="float16"
             )
             reward_model = RobometerRewardModel.from_pretrained(pretrained_name_or_path="lerobot/Robometer-4B", config=reward_model_config)
         self.reward_model = reward_model
