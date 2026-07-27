@@ -119,6 +119,7 @@ class LiberoEnv:
                 #vlm_name='Qwen/Qwen3-VL-2B-Instruct',
                 device='cuda',
                 image_key='observation.images.top',
+                torch_dtype="fp16"
             )
             reward_model = RobometerRewardModel.from_pretrained(pretrained_name_or_path="lerobot/Robometer-4B", config=reward_model_config)
         self.reward_model = reward_model
@@ -718,7 +719,7 @@ def main():
         
         logging_steps=1,
         log_completions=True,
-        bf16=True,                     # FlashAttention requires bf16/fp16
+        fp16=True,                     # FlashAttention requires bf16/fp16
         remove_unused_columns=False,   # Keep visual payload columns intact
         report_to="wandb"               # Set to "wandb" if logging metrics
     )
