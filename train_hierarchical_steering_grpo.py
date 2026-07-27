@@ -3,6 +3,7 @@ from transformers import AutoProcessor, BitsAndBytesConfig, pipeline
 from trl import GRPOConfig, GRPOTrainer
 import random
 from datasets import Dataset
+from lerobot.datasets.dataset_metadata import LeRobotDatasetMetadata
 from lerobot.envs.factory import make_env, make_env_pre_post_processors, make_env_config
 from lerobot.envs.libero import LiberoEnv as LeRobotLiberoEnv
 from lerobot.policies.factory import make_pre_post_processors
@@ -31,6 +32,7 @@ import re
 random.seed(123)
 
 policy_path = "crislmfroes/smolvla-libero-90"
+dataset_path = "crislmfroes/libero_90_lerobot"
 #policy_path = "lerobot/smolvla_libero"
 #policy = SmolVLAPolicy.from_pretrained(pretrained_name_or_path=policy_path)
 #policy = policy.cpu()
@@ -260,7 +262,7 @@ class LiberoEnv:
     def _mat2euler(self, mat: np.ndarray):
         return Rotation.from_matrix(matrix=mat).as_euler(seq="xyz")
     
-    def _return_to_home_position(self)->list:
+    def return_to_home_position(self)->list:
         """
         Return the end-effector of the robotic arm in the Libero environment to its initial position.
         """
@@ -568,10 +570,10 @@ class LiberoEnv:
             obs = self.env_preprocessor(obs)
             if i % 50 == 0:
                 frames.append(obs["observation.images.image"])
-                '''rm_result = self._compute_reward_model(prompt=subtask, is_subtask=True, frames=torch.as_tensor(np.concatenate(frames, axis=0)).unsqueeze(0))
+                rm_result = self._compute_reward_model(prompt=subtask, is_subtask=True, frames=torch.as_tensor(np.concatenate(frames, axis=0)).unsqueeze(0))
                 stage_success = rm_result[0]
                 stage_reward += rm_result[1]
-                if rm_result[1] > last_reward:
+                '''if rm_result[1] > last_reward:
                     last_reward = rm_result[1]
                     self.last_checkpoint = deepcopy(self.obs)
                 else:
@@ -624,13 +626,14 @@ class LiberoEnv:
 # ==========================================
 def preprocess_dataset():
     """Loads and shapes dataset to match TRL's conversational template requirements."""
+    dataset_metadata = LeRobotDatasetMetadata(repo_id=dataset_path)
     dataset = [
         {
             "prompt": [
                 {
                     "role": "system",
                     "content": [
-                        {"type": "text", "text": "You are the high level planner component of a hierarchical vision-language-action model controlling a robotic arm."}
+                        {"type": "text", "text": f"You are the high level planner component of a hierarchical vision-language-action model controlling a robotic arm. Here are the tasks on which the low-level VLA policy you command was trained on: {dataset_metadata.tasks}"}
                     ]
                 },
                 {
