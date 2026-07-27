@@ -266,6 +266,7 @@ class LiberoEnv:
     def return_to_home_position(self)->list:
         """
         Return the end-effector of the robotic arm in the Libero environment to its initial position.
+        You can use this between two VLA subtasks in order to stitch together different behaviors of the policy.
         """
         print('RETURN TO HOME')
         target_position = self.initial_obs["robot_state"]["eef"]["pos"][0]
@@ -574,11 +575,11 @@ class LiberoEnv:
                 rm_result = self._compute_reward_model(prompt=subtask, is_subtask=True, frames=torch.as_tensor(np.concatenate(frames, axis=0)).unsqueeze(0))
                 stage_success = rm_result[0]
                 stage_reward += rm_result[1]
-                '''if rm_result[1] > last_reward:
+                if rm_result[1] > last_reward:
                     last_reward = rm_result[1]
                     self.last_checkpoint = deepcopy(self.obs)
                 else:
-                    break'''
+                    break
             obs = self.policy_preprocessor({
                 "observation.images.top": obs["observation.images.image"],
                 "observation.images.wrist_image": obs["observation.images.image2"],
