@@ -641,7 +641,7 @@ def preprocess_dataset():
     for seed in tqdm.trange(10):
         task_id = random.choice(list(range(1)))
         task_suite = "libero_10"
-        env.reset(task_suite=task_suite, task_id=task_id, seed=seed)
+        env.reset(task_suite=task_suite, task_id=task_id, seed=seed, start_idx=0)
         for j in range(10):
             env.run_vla_policy(subtask=env._get_libero_task_description())
         dataset += [
