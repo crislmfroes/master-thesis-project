@@ -29,6 +29,8 @@ import torch
 import gc
 import re
 
+import tqdm
+
 random.seed(123)
 
 policy_path = "crislmfroes/smolvla-libero-90"
@@ -74,6 +76,7 @@ class LiberoEnv:
         self.subtask_reward = 0.0
         self.task_reward = 0.0
         self.stage_reward = 0.0
+        self.actions = []
         self.initial_obs = deepcopy(self.obs)
         self.last_checkpoint = deepcopy(self.initial_obs)
         self.last_action = np.zeros((1, 7))
@@ -81,6 +84,8 @@ class LiberoEnv:
         print('TASK:', self._get_libero_task_description())
         self._load_vla_policy()
         self._load_reward_model()
+        for timestep in range(kwargs["start_idx"]):
+            self.env[self.task_suite][self.task_id].step(actions=kwargs["actions"][timestep])
         return [
             *self._get_current_observation(),
             {
@@ -592,6 +597,7 @@ class LiberoEnv:
             action = self.env_postprocessor(action)
             action = action["action"].detach().cpu().numpy()
             self.last_action = action
+            self.actions.append(self.last_action)
             obs, reward, terminated, truncated, info = self.env[self.task_suite][self.task_id].step(self.last_action)
             self._get_current_observation()
             self.obs = obs
@@ -629,27 +635,38 @@ class LiberoEnv:
 def preprocess_dataset():
     """Loads and shapes dataset to match TRL's conversational template requirements."""
     dataset_metadata = LeRobotDatasetMetadata(repo_id=dataset_path)
-    dataset = [
-        {
-            "prompt": [
-                {
-                    "role": "system",
-                    "content": [
-                        {"type": "text", "text": f"You are the high level planner component of a hierarchical vision-language-action model controlling a robotic arm. Here are the tasks on which the low-level VLA policy you command was trained on: {dataset_metadata.tasks}"}
-                    ]
-                },
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": "Execute the high level task given by the Libero environment."}
-                    ]
-                }
-            ],
-            "task_suite": "libero_10",
-            "task_id": random.choice(list(range(1))),
-            "seed": seed
-        } for seed in range(1000)
-    ]
+    dataset = []
+    env = LiberoEnv()
+    env_metadatas = []
+    for seed in tqdm.trange(100):
+        task_id = random.choice(list(range(1)))
+        task_suite = "libero_10"
+        env.reset(task_suite=task_suite, task_id=task_id, seed=seed)
+        for j in range(10):
+            env.run_vla_policy(subtask=env._get_libero_task_description())
+        dataset += [
+            {
+                "prompt": [
+                    {
+                        "role": "system",
+                        "content": [
+                            {"type": "text", "text": f"You are the high level planner component of a hierarchical vision-language-action model controlling a robotic arm. Here are the tasks on which the low-level VLA policy you command was trained on: {dataset_metadata.tasks}"}
+                        ]
+                    },
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "Execute the high level task given by the Libero environment."}
+                        ]
+                    }
+                ],
+                "task_suite": "libero_10",
+                "task_id": task_id,
+                "seed": seed,
+                "actions": env.actions,
+                "start_idx": random.choice(list(range(len(env.actions))))
+            }
+        ]
 
     return Dataset.from_list(mapping=dataset)
 
@@ -694,24 +711,24 @@ def main():
         output_dir=OUTPUT_DIR,
         learning_rate=5e-6,
         per_device_train_batch_size=1, # Adjust based on your VRAM
-        gradient_accumulation_steps=4,
+        gradient_accumulation_steps=64,
         max_steps=100,
         generation_kwargs=dict(
             pad_token_id=processor.tokenizer.pad_token_id
         ),
         chat_template_kwargs=dict(
-            enable_thinking=False,
+            enable_thinking=True,
         ),
         max_completion_length=64*(500/20),
         use_liger_kernel=False,
         
         # GRPO Specific configuration settings
-        num_generations=4,             # Number of completions to sample per prompt (G parameter)
+        num_generations=64,             # Number of completions to sample per prompt (G parameter)
         #max_prompt_length=512,
         #max_completion_length=16000,    # Space for complex reasoning/thinking block
         #vllm_max_model_length=4096,
         #max_completion_length=4096,
-        #max_tool_calling_iterations=10,
+        max_tool_calling_iterations=1,
 
         # Generation Acceleration with colocated vLLM 
         use_vllm=False,
