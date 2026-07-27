@@ -720,8 +720,8 @@ def main():
         
         logging_steps=1,
         log_completions=True,
-        fp16=True,                     # FlashAttention requires bf16/fp16
-        bf16=False,
+        #fp16=True,                     # FlashAttention requires bf16/fp16
+        bf16=True,
         remove_unused_columns=False,   # Keep visual payload columns intact
         report_to="wandb"               # Set to "wandb" if logging metrics
     )
