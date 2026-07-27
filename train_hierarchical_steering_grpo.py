@@ -92,8 +92,8 @@ class LiberoEnv:
     def _load_vla_policy(self):
         global policy
         if policy == None:
-            policy = SmolVLAPolicy.from_pretrained(pretrained_name_or_path=policy_path).half()
-            policy.config.n_action_steps = 1
+            policy = SmolVLAPolicy.from_pretrained(pretrained_name_or_path=policy_path)
+            #policy.config.n_action_steps = 1
         policy_preprocessor, policy_postprocessor = make_pre_post_processors(policy_cfg=policy.config, pretrained_path=policy_path)
         self.policy = policy
         self.policy_preprocessor = policy_preprocessor
