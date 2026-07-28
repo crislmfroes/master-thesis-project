@@ -87,7 +87,7 @@ class LiberoEnv:
         #print(self.env[self.task_suite][self.task_id].envs[0].unwrapped._env.sim.model.body_names)
         #print(self.env[self.task_suite][self.task_id].envs[0].unwrapped._env.sim.data.get_body_xpos("object_name"))
         #print(self.env[self.task_suite][self.task_id])
-        exit()
+        #exit()
         print('TASK:', self._get_libero_task_description())
         self._load_vla_policy()
         self._load_reward_model()
