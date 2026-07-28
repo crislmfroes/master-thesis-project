@@ -561,13 +561,14 @@ class LiberoEnv:
         print('DE-ACTIVATE STOVE')
         return self.run_vla_policy(subtask=f"turn off the stove burner")
     
-    def run_vla_policy(self, subtask: str, noisy_action: list[float])->list:
+    def run_vla_policy(self, subtask: str, direction_to_move: Literal["left", "right", "forward", "backward", "up", "down"], gripper_action: Literal["open", "close"])->list:
         """
         Move the robotic arm in the libero environment by prompting a pretrained vision-language-action model. You must break the environment task into small, short horizon, atomic subtasks, and feed only the next immediate subtask into the VLA.
 
         Args:
             subtask: The subtask to feed into the VLA model.
-            noisy_action: The 7-dof initial action to be denoised by the VLA model.
+            direction_to_move: The direction to move the end-effector.
+            gripper_action: If the VLA should open or close the gripper of the robot.
         """
         prompt = subtask
         max_steps = 50
@@ -582,7 +583,7 @@ class LiberoEnv:
         stage_success = False
         stage_reward = 0.0
         last_reward = 0.0
-        '''initial_noise = torch.zeros((1, 50, 32))
+        initial_noise = torch.zeros((1, 50, 32))
         direction_to_action = {
             "left": torch.tensor([[0.0, 1.0, 0.0],]*50),
             "right": torch.tensor([[0.0, -1.0, 0.0],]*50),
@@ -591,9 +592,12 @@ class LiberoEnv:
             "up": torch.tensor([[0.0, 0.0, 1.0],]*50),
             "down": torch.tensor([[0.0, 0.0, -1.0],]*50),
         }
-        initial_noise[:, :, :3] = direction_to_action[direction_to_move]'''
-        initial_noise = torch.zeros((1, 50, 32))
-        initial_noise[:, :, :7] = torch.as_tensor([[noisy_action[:7],]*50,])
+        gripper_action_to_action = {
+            "open": torch.tensor([[-1.0,],]*50),
+            "close": torch.tensor([[1.0,],]*50),
+        }
+        initial_noise[:, :, :3] = direction_to_action[direction_to_move]
+        initial_noise[:, :, 6:7] = gripper_action_to_action[gripper_action]
         for i in range(max_steps):
             obs = preprocess_observation(observations=self.obs)
             obs = self.env_preprocessor(obs)
@@ -732,7 +736,7 @@ def main():
         output_dir=OUTPUT_DIR,
         learning_rate=5e-6,
         per_device_train_batch_size=1, # Adjust based on your VRAM
-        gradient_accumulation_steps=4,
+        gradient_accumulation_steps=8,
         max_steps=100,
         generation_kwargs=dict(
             pad_token_id=processor.tokenizer.pad_token_id
@@ -744,7 +748,7 @@ def main():
         use_liger_kernel=False,
         
         # GRPO Specific configuration settings
-        num_generations=4,             # Number of completions to sample per prompt (G parameter)
+        num_generations=8,             # Number of completions to sample per prompt (G parameter)
         #max_prompt_length=512,
         #max_completion_length=16000,    # Space for complex reasoning/thinking block
         #vllm_max_model_length=4096,
