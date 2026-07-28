@@ -611,7 +611,7 @@ class LiberoEnv:
                 "observation.state": obs["observation.state"],
                 "task": prompt
             })
-            action = self.policy.select_action(batch=obs, noise=initial_noise)
+            action = self.policy.select_action(batch=obs, noise=initial_noise.cuda())
             action = self.policy_postprocessor(data=action)
             action = {"action": action}
             action = self.env_postprocessor(action)
