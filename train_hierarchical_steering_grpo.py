@@ -85,7 +85,8 @@ class LiberoEnv:
         self._load_vla_policy()
         self._load_reward_model()
         for timestep in range(kwargs["start_idx"]):
-            self.env[self.task_suite][self.task_id].step(actions=kwargs["actions"][timestep])
+            print(kwargs["actions"][timestep])
+            self.env[self.task_suite][self.task_id].step(actions=kwargs["actions"][timestep][0])
         return [
             *self._get_current_observation(),
             {
@@ -637,8 +638,7 @@ def preprocess_dataset():
     dataset_metadata = LeRobotDatasetMetadata(repo_id=dataset_path)
     dataset = []
     env = LiberoEnv()
-    env_metadatas = []
-    for seed in tqdm.trange(10):
+    for seed in tqdm.trange(1):
         task_id = random.choice(list(range(1)))
         task_suite = "libero_10"
         env.reset(task_suite=task_suite, task_id=task_id, seed=seed, start_idx=0)
