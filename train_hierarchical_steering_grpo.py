@@ -91,9 +91,9 @@ class LiberoEnv:
         print('TASK:', self._get_libero_task_description())
         self._load_vla_policy()
         self._load_reward_model()
-        for timestep in range(kwargs["start_idx"]):
+        '''for timestep in range(kwargs["start_idx"]):
             print(kwargs["actions"][timestep])
-            self.env[self.task_suite][self.task_id].step(actions=np.asarray(kwargs["actions"][timestep]))
+            self.env[self.task_suite][self.task_id].step(actions=np.asarray(kwargs["actions"][timestep]))'''
         return [
             *self._get_current_observation(),
             {
@@ -656,13 +656,13 @@ def preprocess_dataset():
     """Loads and shapes dataset to match TRL's conversational template requirements."""
     dataset_metadata = LeRobotDatasetMetadata(repo_id=dataset_path)
     dataset = []
-    env = LiberoEnv()
-    for seed in tqdm.trange(1):
+    #env = LiberoEnv()
+    for seed in tqdm.trange(100):
         task_id = random.choice(list(range(1)))
         task_suite = "libero_10"
-        env.reset(task_suite=task_suite, task_id=task_id, seed=seed, start_idx=0)
+        '''env.reset(task_suite=task_suite, task_id=task_id, seed=seed, start_idx=0)
         for j in range(10):
-            env.run_vla_policy(subtask=env._get_libero_task_description())
+            env.run_vla_policy(subtask=env._get_libero_task_description())'''
         dataset += [
             {
                 "prompt": [
@@ -682,8 +682,8 @@ def preprocess_dataset():
                 "task_suite": "libero_10",
                 "task_id": task_id,
                 "seed": seed,
-                "actions": env.actions,
-                "start_idx": random.choice(list(range(len(env.actions))))
+                #"actions": env.actions,
+                #"start_idx": random.choice(list(range(len(env.actions))))
             }
         ]
 
