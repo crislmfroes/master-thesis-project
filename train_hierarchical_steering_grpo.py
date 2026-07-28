@@ -86,7 +86,7 @@ class LiberoEnv:
         self._load_reward_model()
         for timestep in range(kwargs["start_idx"]):
             print(kwargs["actions"][timestep])
-            self.env[self.task_suite][self.task_id].step(actions=kwargs["actions"][timestep][0])
+            self.env[self.task_suite][self.task_id].step(actions=np.asarray(kwargs["actions"][timestep]))
         return [
             *self._get_current_observation(),
             {
