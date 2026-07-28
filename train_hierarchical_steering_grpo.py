@@ -81,6 +81,13 @@ class LiberoEnv:
         self.last_checkpoint = deepcopy(self.initial_obs)
         self.last_action = np.zeros((1, 7))
         self.frames = []
+
+        #print(self.env[self.task_suite][self.task_id].metadata)
+        #print(self.env[self.task_suite][self.task_id].envs[0].unwrapped._env.obj_of_interest)
+        #print(self.env[self.task_suite][self.task_id].envs[0].unwrapped._env.sim.model.body_names)
+        #print(self.env[self.task_suite][self.task_id].envs[0].unwrapped._env.sim.data.get_body_xpos("object_name"))
+        #print(self.env[self.task_suite][self.task_id])
+        exit()
         print('TASK:', self._get_libero_task_description())
         self._load_vla_policy()
         self._load_reward_model()
@@ -154,6 +161,7 @@ class LiberoEnv:
     
     def get_reward(self)->float:
         #self._unload_vla_policy()
+        #self._load_reward_model()
         if len(self.frames) > 0:
             rm_result = self._compute_reward_model(prompt=self._get_libero_task_description(), is_subtask=False, frames=torch.as_tensor(np.concatenate(self.frames, axis=0)).unsqueeze(0))
         else:
@@ -269,7 +277,7 @@ class LiberoEnv:
     def _mat2euler(self, mat: np.ndarray):
         return Rotation.from_matrix(matrix=mat).as_euler(seq="xyz")
     
-    def return_to_home_position(self)->list:
+    def _return_to_home_position(self)->list:
         """
         Return the end-effector of the robotic arm in the Libero environment to its initial position.
         You can use this between two VLA subtasks in order to stitch together different behaviors of the policy.
@@ -553,12 +561,13 @@ class LiberoEnv:
         print('DE-ACTIVATE STOVE')
         return self.run_vla_policy(subtask=f"turn off the stove burner")
     
-    def run_vla_policy(self, subtask: str)->list:
+    def run_vla_policy(self, subtask: str, direction_to_move: Literal["left", "right", "forward", "backward", "up", "down"])->list:
         """
         Move the robotic arm in the libero environment by prompting a pretrained vision-language-action model. You must break the environment task into small, short horizon, atomic subtasks, and feed only the next immediate subtask into the VLA.
 
         Args:
             subtask: The subtask to feed into the VLA model.
+            direction_to_move: The direction to move the end-effector.
         """
         prompt = subtask
         max_steps = 50
@@ -573,6 +582,16 @@ class LiberoEnv:
         stage_success = False
         stage_reward = 0.0
         last_reward = 0.0
+        initial_noise = torch.zeros((1, 50, 32))
+        direction_to_action = {
+            "left": torch.tensor([[0.0, 1.0, 0.0],]*50),
+            "right": torch.tensor([[0.0, -1.0, 0.0],]*50),
+            "forward": torch.tensor([[1.0, 0.0, 0.0],]*50),
+            "backward": torch.tensor([[-1.0, 0.0, 0.0],]*50),
+            "up": torch.tensor([[0.0, 0.0, 1.0],]*50),
+            "down": torch.tensor([[0.0, 0.0, -1.0],]*50),
+        }
+        initial_noise[:, :, :3] = direction_to_action[direction_to_move]
         for i in range(max_steps):
             obs = preprocess_observation(observations=self.obs)
             obs = self.env_preprocessor(obs)
@@ -592,7 +611,7 @@ class LiberoEnv:
                 "observation.state": obs["observation.state"],
                 "task": prompt
             })
-            action = self.policy.select_action(batch=obs)
+            action = self.policy.select_action(batch=obs, noise=initial_noise)
             action = self.policy_postprocessor(data=action)
             action = {"action": action}
             action = self.env_postprocessor(action)
@@ -711,24 +730,24 @@ def main():
         output_dir=OUTPUT_DIR,
         learning_rate=5e-6,
         per_device_train_batch_size=1, # Adjust based on your VRAM
-        gradient_accumulation_steps=64,
+        gradient_accumulation_steps=4,
         max_steps=100,
         generation_kwargs=dict(
             pad_token_id=processor.tokenizer.pad_token_id
         ),
         chat_template_kwargs=dict(
-            enable_thinking=True,
+            enable_thinking=False,
         ),
-        max_completion_length=64*(500/20),
+        max_completion_length=256*(500/50),
         use_liger_kernel=False,
         
         # GRPO Specific configuration settings
-        num_generations=64,             # Number of completions to sample per prompt (G parameter)
+        num_generations=4,             # Number of completions to sample per prompt (G parameter)
         #max_prompt_length=512,
         #max_completion_length=16000,    # Space for complex reasoning/thinking block
         #vllm_max_model_length=4096,
         #max_completion_length=4096,
-        max_tool_calling_iterations=1,
+        max_tool_calling_iterations=10,
 
         # Generation Acceleration with colocated vLLM 
         use_vllm=False,
