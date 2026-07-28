@@ -561,13 +561,13 @@ class LiberoEnv:
         print('DE-ACTIVATE STOVE')
         return self.run_vla_policy(subtask=f"turn off the stove burner")
     
-    def run_vla_policy(self, subtask: str, direction_to_move: Literal["left", "right", "forward", "backward", "up", "down"])->list:
+    def run_vla_policy(self, subtask: str, noisy_action: list[float])->list:
         """
         Move the robotic arm in the libero environment by prompting a pretrained vision-language-action model. You must break the environment task into small, short horizon, atomic subtasks, and feed only the next immediate subtask into the VLA.
 
         Args:
             subtask: The subtask to feed into the VLA model.
-            direction_to_move: The direction to move the end-effector.
+            noisy_action: The 7-dof initial action to be denoised by the VLA model.
         """
         prompt = subtask
         max_steps = 50
@@ -582,7 +582,7 @@ class LiberoEnv:
         stage_success = False
         stage_reward = 0.0
         last_reward = 0.0
-        initial_noise = torch.zeros((1, 50, 32))
+        '''initial_noise = torch.zeros((1, 50, 32))
         direction_to_action = {
             "left": torch.tensor([[0.0, 1.0, 0.0],]*50),
             "right": torch.tensor([[0.0, -1.0, 0.0],]*50),
@@ -591,7 +591,9 @@ class LiberoEnv:
             "up": torch.tensor([[0.0, 0.0, 1.0],]*50),
             "down": torch.tensor([[0.0, 0.0, -1.0],]*50),
         }
-        initial_noise[:, :, :3] = direction_to_action[direction_to_move]
+        initial_noise[:, :, :3] = direction_to_action[direction_to_move]'''
+        initial_noise = torch.zeros((1, 50, 32))
+        initial_noise[:, :, :7] = torch.as_tensor([[noisy_action[:7],]*50,])
         for i in range(max_steps):
             obs = preprocess_observation(observations=self.obs)
             obs = self.env_preprocessor(obs)
