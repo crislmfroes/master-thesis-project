@@ -50,7 +50,7 @@ trainer: GRPOTrainer = None
 # ==========================================
 # 1. Configuration & Constants
 # ==========================================
-MODEL_ID = "Qwen/Qwen3.5-4B"
+MODEL_ID = "Qwen/Qwen3.5-0.8B"
 OUTPUT_DIR = "./vlm-grpo-vla-steering"
 
 
@@ -576,7 +576,7 @@ class LiberoEnv:
             gripper_action: If the VLA should open or close the gripper of the robot.
         """
         prompt = subtask
-        max_steps = 10
+        max_steps = 1
         max_retries = 0
         #self._open_gripper()
         #self.return_to_home_position()
@@ -749,7 +749,7 @@ def main():
         chat_template_kwargs=dict(
             enable_thinking=False,
         ),
-        max_completion_length=4096,#64*(500/50),
+        max_completion_length=64000,#64*(500/50),
         use_liger_kernel=False,
         
         # GRPO Specific configuration settings
@@ -758,7 +758,7 @@ def main():
         #max_completion_length=16000,    # Space for complex reasoning/thinking block
         #vllm_max_model_length=4096,
         #max_completion_length=4096,
-        max_tool_calling_iterations=50,
+        max_tool_calling_iterations=500,
 
         # Generation Acceleration with colocated vLLM 
         use_vllm=False,
