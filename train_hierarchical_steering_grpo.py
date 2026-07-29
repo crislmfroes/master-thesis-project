@@ -171,7 +171,7 @@ class LiberoEnv:
             rm_result = (False, 0.0)
         reward = 100.0*self.task_reward + 10.0*rm_result[1]# + self.stage_reward # + 0.5*self._compute_reward_model(self._get_libero_task_description(), is_subtask=False)[1] + 0.5*self.subtask_reward
         self.prev_obs = deepcopy(self.obs)
-        if compute_reward_counter > 0 and compute_reward_counter % 8 >= 7:
+        if compute_reward_counter > 0 and compute_reward_counter % 2 >= 1:
             self._unload_reward_model()
         compute_reward_counter += 1
         return reward
@@ -741,7 +741,7 @@ def main():
         output_dir=OUTPUT_DIR,
         learning_rate=5e-6,
         per_device_train_batch_size=1, # Adjust based on your VRAM
-        gradient_accumulation_steps=8,
+        gradient_accumulation_steps=2,
         max_steps=100,
         generation_kwargs=dict(
             pad_token_id=processor.tokenizer.pad_token_id
@@ -753,12 +753,12 @@ def main():
         use_liger_kernel=False,
         
         # GRPO Specific configuration settings
-        num_generations=8,             # Number of completions to sample per prompt (G parameter)
+        num_generations=2,             # Number of completions to sample per prompt (G parameter)
         #max_prompt_length=512,
         #max_completion_length=16000,    # Space for complex reasoning/thinking block
         #vllm_max_model_length=4096,
         #max_completion_length=4096,
-        max_tool_calling_iterations=10,
+        max_tool_calling_iterations=50,
 
         # Generation Acceleration with colocated vLLM 
         use_vllm=False,
