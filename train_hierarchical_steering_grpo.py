@@ -48,7 +48,7 @@ trainer: GRPOTrainer = None
 # ==========================================
 # 1. Configuration & Constants
 # ==========================================
-MODEL_ID = "Qwen/Qwen3.5-0.8B"
+MODEL_ID = "Qwen/Qwen3.5-9B"
 OUTPUT_DIR = "./vlm-grpo-vla-steering"
 
 
@@ -736,7 +736,7 @@ def main():
         output_dir=OUTPUT_DIR,
         learning_rate=5e-6,
         per_device_train_batch_size=1, # Adjust based on your VRAM
-        gradient_accumulation_steps=8,
+        gradient_accumulation_steps=2,
         max_steps=100,
         generation_kwargs=dict(
             pad_token_id=processor.tokenizer.pad_token_id
@@ -748,7 +748,7 @@ def main():
         use_liger_kernel=False,
         
         # GRPO Specific configuration settings
-        num_generations=8,             # Number of completions to sample per prompt (G parameter)
+        num_generations=2,             # Number of completions to sample per prompt (G parameter)
         #max_prompt_length=512,
         #max_completion_length=16000,    # Space for complex reasoning/thinking block
         #vllm_max_model_length=4096,
