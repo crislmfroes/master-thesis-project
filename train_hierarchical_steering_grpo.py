@@ -43,6 +43,8 @@ policy = None
 
 reward_model = None
 
+compute_reward_counter = 0
+
 trainer: GRPOTrainer = None
 
 # ==========================================
@@ -106,7 +108,7 @@ class LiberoEnv:
         global policy
         if policy == None:
             policy = SmolVLAPolicy.from_pretrained(pretrained_name_or_path=policy_path)
-            policy.config.n_action_steps = 1
+            #policy.config.n_action_steps = 1
         policy_preprocessor, policy_postprocessor = make_pre_post_processors(policy_cfg=policy.config, pretrained_path=policy_path)
         self.policy = policy
         self.policy_preprocessor = policy_preprocessor
@@ -160,6 +162,7 @@ class LiberoEnv:
         gc.collect()
     
     def get_reward(self)->float:
+        global compute_reward_counter
         self._unload_vla_policy()
         self._load_reward_model()
         if len(self.frames) > 0:
@@ -168,7 +171,9 @@ class LiberoEnv:
             rm_result = (False, 0.0)
         reward = 100.0*self.task_reward + 10.0*rm_result[1]# + self.stage_reward # + 0.5*self._compute_reward_model(self._get_libero_task_description(), is_subtask=False)[1] + 0.5*self.subtask_reward
         self.prev_obs = deepcopy(self.obs)
-        self._unload_reward_model()
+        if compute_reward_counter > 0 and compute_reward_counter % 8 >= 7:
+            self._unload_reward_model()
+        compute_reward_counter += 1
         return reward
     
     def _compute_reward_model(self, prompt: str, is_subtask=True, frames: torch.Tensor=None):
@@ -571,7 +576,7 @@ class LiberoEnv:
             gripper_action: If the VLA should open or close the gripper of the robot.
         """
         prompt = subtask
-        max_steps = 50
+        max_steps = 10
         max_retries = 0
         #self._open_gripper()
         #self.return_to_home_position()
@@ -744,7 +749,7 @@ def main():
         chat_template_kwargs=dict(
             enable_thinking=False,
         ),
-        max_completion_length=64*(500/50),
+        max_completion_length=4096,#64*(500/50),
         use_liger_kernel=False,
         
         # GRPO Specific configuration settings
