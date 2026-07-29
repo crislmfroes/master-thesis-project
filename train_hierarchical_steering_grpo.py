@@ -160,15 +160,15 @@ class LiberoEnv:
         gc.collect()
     
     def get_reward(self)->float:
-        #self._unload_vla_policy()
-        #self._load_reward_model()
-        if len(self.frames) > 0 and False:
+        self._unload_vla_policy()
+        self._load_reward_model()
+        if len(self.frames) > 0:
             rm_result = self._compute_reward_model(prompt=self._get_libero_task_description(), is_subtask=False, frames=torch.as_tensor(np.concatenate(self.frames, axis=0)).unsqueeze(0))
         else:
             rm_result = (False, 0.0)
         reward = 100.0*self.task_reward + 10.0*rm_result[1]# + self.stage_reward # + 0.5*self._compute_reward_model(self._get_libero_task_description(), is_subtask=False)[1] + 0.5*self.subtask_reward
         self.prev_obs = deepcopy(self.obs)
-        #self._unload_reward_model()
+        self._unload_reward_model()
         return reward
     
     def _compute_reward_model(self, prompt: str, is_subtask=True, frames: torch.Tensor=None):
@@ -576,7 +576,7 @@ class LiberoEnv:
         #self._open_gripper()
         #self.return_to_home_position()
         print(f'RUN VLA: {prompt}, {max_steps}')
-        #self._load_vla_policy()
+        self._load_vla_policy()
         self.policy.reset()
         self._get_current_observation()
         frames = []
@@ -675,7 +675,7 @@ def preprocess_dataset():
                     {
                         "role": "system",
                         "content": [
-                            {"type": "text", "text": f"You are the high level planner component of a hierarchical vision-language-action model controlling a robotic arm. Here are the tasks on which the low-level VLA policy you command was trained on: {dataset_metadata.tasks}"}
+                            {"type": "text", "text": f"You are the high level planner component of a hierarchical vision-language-action model controlling a robotic arm. DO NOT THINK OR TALK, JUST EXECUTE TOOL CALLS!"}
                         ]
                     },
                     {
