@@ -48,7 +48,7 @@ trainer: GRPOTrainer = None
 # ==========================================
 # 1. Configuration & Constants
 # ==========================================
-MODEL_ID = "Qwen/Qwen3.5-4B"
+MODEL_ID = "Qwen/Qwen3.5-9B"
 OUTPUT_DIR = "./vlm-grpo-vla-steering"
 
 
@@ -90,7 +90,7 @@ class LiberoEnv:
         #exit()
         print('TASK:', self._get_libero_task_description())
         self._load_vla_policy()
-        self._load_reward_model()
+        #self._load_reward_model()
         '''for timestep in range(kwargs["start_idx"]):
             print(kwargs["actions"][timestep])
             self.env[self.task_suite][self.task_id].step(actions=np.asarray(kwargs["actions"][timestep]))'''
@@ -106,7 +106,7 @@ class LiberoEnv:
         global policy
         if policy == None:
             policy = SmolVLAPolicy.from_pretrained(pretrained_name_or_path=policy_path)
-            #policy.config.n_action_steps = 1
+            policy.config.n_action_steps = 1
         policy_preprocessor, policy_postprocessor = make_pre_post_processors(policy_cfg=policy.config, pretrained_path=policy_path)
         self.policy = policy
         self.policy_preprocessor = policy_preprocessor
@@ -162,7 +162,7 @@ class LiberoEnv:
     def get_reward(self)->float:
         #self._unload_vla_policy()
         #self._load_reward_model()
-        if len(self.frames) > 0:
+        if len(self.frames) > 0 and False:
             rm_result = self._compute_reward_model(prompt=self._get_libero_task_description(), is_subtask=False, frames=torch.as_tensor(np.concatenate(self.frames, axis=0)).unsqueeze(0))
         else:
             rm_result = (False, 0.0)
@@ -571,7 +571,7 @@ class LiberoEnv:
             gripper_action: If the VLA should open or close the gripper of the robot.
         """
         prompt = subtask
-        max_steps = 150
+        max_steps = 50
         max_retries = 0
         #self._open_gripper()
         #self.return_to_home_position()
