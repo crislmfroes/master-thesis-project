@@ -225,16 +225,24 @@ class LiberoEnv:
         """
         return self.env[self.task_suite][self.task_id].call('task_description')[0]
     
-    def _get_current_observation(self, generate_text_description=False)->list:
+    def _get_current_observation(self, generate_text_description=False) -> list:
         """
-        Get the current visual observation from the Libero environment.
+        Get the current visual observation from the Libero environment, optionally with
+        a text description, and always with the current end‑effector pose.
+
+        Args:
+            generate_text_description (bool): If True, generate a descriptive caption of the image.
 
         Returns:
-            The image of the current visual observation.
+            list: A list of message dicts suitable for the GRPO environment format.
+                Contains at least:
+                    - text: "Current observation image:"
+                    - image: PIL Image of the top camera view
+                    - text: the end‑effector position and orientation (x,y,z and roll,pitch,yaw)
+                    - optionally, a text description if generate_text_description is True.
         """
         print('GET OBS')
         img = Image.fromarray(cv2.resize(self.obs['pixels']['image'][0][::-1,::-1,:].copy(), (448, 448)))
-        #img.save(f'debug_{self.env_counter % 2}.jpg')
         return_message = [
             {
                 "type": "text",
@@ -245,25 +253,42 @@ class LiberoEnv:
                 "image": img
             }
         ]
-        if generate_text_description == True:
+
+        # Add end‑effector pose information
+        pos = self.obs["robot_state"]["eef"]["pos"][0]          # numpy array (3,)
+        mat = np.array(self.obs["robot_state"]["eef"]["mat"][0]) # (3,3) rotation matrix
+        rpy = self._mat2euler(mat)                               # (roll, pitch, yaw) in radians
+        return_message.append({
+            "type": "text",
+            "text": f"End‑effector position (x,y,z): {pos.tolist()}, orientation (roll,pitch,yaw): {rpy.tolist()}"
+        })
+
+        if generate_text_description:
             self._load_description_generator()
-            caption_message = {"role": "user", "content": [
-                {
-                    "type": "text",
-                    "text": "Generate a descriptive caption of the image, complete with points and bounding box annotations."
-                },
-                {
-                    "type": "image",
-                    "image": img
-                }
-            ]}
-            self.description_generator
-            description = self.description_generator(images=[img], text=caption_message, return_full_text=False)[0]["generated_text"]
+            caption_message = {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "Generate a descriptive caption of the image, complete with points and bounding box annotations."
+                    },
+                    {
+                        "type": "image",
+                        "image": img
+                    }
+                ]
+            }
+            description = self.description_generator(
+                images=[img],
+                text=caption_message,
+                return_full_text=False
+            )[0]["generated_text"]
             return_message.append({
                 "type": "text",
                 "text": f"Image description: {description}"
             })
             self._unload_description_generator()
+
         return return_message
     
     '''def detect_with_yolo_world(self, classes: list[str])->list:
@@ -465,24 +490,27 @@ class LiberoEnv:
             #}
         ]
     
-    def _move_arm(self, direction: Literal["left", "right", "forward", "backward", "up", "down"])->list:
+    def move_to(self, xyz: list[float])->list:
         """
-        Moves the end-effector of the robotic arm in the given direction.
+        Moves the end-effector of the robotic arm to the target xyz position.
 
         Args:
-            direction: The direction to move the end-effector.
+            xyz: The target position to move the end-effector.
         """
-        print('MOVE ARM', direction)
-        direction_to_action = {
-            "left": np.array([0.0, 1.0, 0.0]),
-            "right": np.array([0.0, -1.0, 0.0]),
-            "forward": np.array([1.0, 0.0, 0.0]),
-            "backward": np.array([-1.0, 0.0, 0.0]),
-            "up": np.array([0.0, 0.0, 1.0]),
-            "down": np.array([0.0, 0.0, -1.0]),
-        }
-        for timestep in range(10):
-            self.last_action[0, :3] = direction_to_action[direction]
+        print('MOVE ARM', xyz)
+        target_position = np.asarray(xyz)
+        current_position = self.obs["robot_state"]["eef"]["pos"][0]
+        kp = 100.0
+        kd = 10.0
+        dt = 0.002
+        prev_pos_error = 0.0
+        prev_rot_error = 0.0
+        for timestep in range(500): #while np.linalg.norm(target_position - current_position) > 0.05 or np.linalg.norm(target_rotation - current_rotation) > 0.05:
+            pos_error = timestep*(target_position - current_position)/150.0
+            pos_derivative = (pos_error - prev_pos_error) / dt
+            pos_output = (kp * pos_error) + (kd * pos_derivative)
+            pos_action = pos_output - current_position
+            self.last_action[0, :3] = pos_action
             self.last_action[0, 3] = 0.0
             self.last_action[0, 4] = 0.0
             self.last_action[0, 5] = 0.0
@@ -490,22 +518,164 @@ class LiberoEnv:
             self._get_current_observation()
             self.obs = obs
             self.info = info
-            if terminated[0] or truncated[0] or self.info['is_success'][0]:
+            print(terminated)
+            print(truncated)
+            print(info)
+            if terminated[0] or truncated[0] or self.info['is_success'][0] or np.linalg.norm(pos_error) <= 0.05:
                 break
-        success, reward = self._compute_reward_model(prompt=self._get_libero_task_description(), is_subtask=True)
-        self.subtask_reward += reward
-        self.prev_obs = deepcopy(self.obs)
-        '''if (success == False and not (terminated[0] or truncated[0] or self.info['is_success'][0])) and (max_retries > 0):
-            return_val =  self.run_vla_policy(subtask=prompt, max_retries=max_retries-1)
-            self.prev_obs = deepcopy(self.obs)
-            return return_val'''
-        return [
-            *self._get_current_observation(),
-            #{
-            #    "type": "text",
-            #    "text": f"Subtask completed: {success}"
-            #}
-        ]
+            prev_pos_error = pos_error
+            current_position = self.obs["robot_state"]["eef"]["pos"][0]
+        return self._get_current_observation()
+    
+    def move_pose(self, xyz: list[float], rpy: list[float]) -> list:
+        """
+        Move the end‑effector to a target Cartesian position and orientation (roll‑pitch‑yaw)
+        using a PD controller for both translation and rotation.
+
+        This primitive implements the "MOVE POSE" composite action from the Harness VLA paper,
+        allowing the arm to reach a specific pose while holding the gripper state.
+
+        Args:
+            xyz (list[float]): Target position as [x, y, z] in world coordinates (meters).
+            rpy (list[float]): Target orientation as [roll, pitch, yaw] in radians.
+
+        Returns:
+            list: A list of observation messages compatible with the GRPO environment format.
+                  Contains at least a text description and the current image observation.
+
+        Notes:
+            - Uses proportional‑derivative control with empirically tuned gains.
+            - Orientation errors are wrapped to [-π, π] to handle angular discontinuities.
+            - The controller stops when the pose error falls below 1 cm and 0.01 rad, or when the
+              environment signals termination/success.
+        """
+        target_pos = np.asarray(xyz)
+        target_rpy = np.asarray(rpy)
+
+        # PD gains (tuned for Libero's dynamics)
+        kp_pos, kd_pos = 100.0, 10.0
+        kp_rot, kd_rot = 50.0, 5.0
+        dt = 0.002
+        prev_pos_err = np.zeros(3)
+        prev_rot_err = np.zeros(3)
+
+        max_steps = 500
+
+        def get_current_rpy():
+            mat = np.array(self.obs["robot_state"]["eef"]["mat"][0])
+            return self._mat2euler(mat)
+
+        for _ in range(max_steps):
+            current_pos = self.obs["robot_state"]["eef"]["pos"][0]
+            current_rpy = get_current_rpy()
+
+            # Position error and derivative
+            pos_err = target_pos - current_pos
+            pos_deriv = (pos_err - prev_pos_err) / dt
+            pos_cmd = kp_pos * pos_err + kd_pos * pos_deriv
+
+            # Orientation error with wrapping
+            rot_err = target_rpy - current_rpy
+            rot_err = np.arctan2(np.sin(rot_err), np.cos(rot_err))
+            rot_deriv = (rot_err - prev_rot_err) / dt
+            rot_cmd = kp_rot * rot_err + kd_rot * rot_deriv
+
+            # Build action: delta position, delta orientation, keep gripper
+            self.last_action[0, :3] = pos_cmd
+            self.last_action[0, 3:6] = rot_cmd
+            self.last_action[0, 6] = self.last_action[0, 6]  # gripper unchanged
+
+            obs, reward, terminated, truncated, info = self.env[self.task_suite][self.task_id].step(self.last_action)
+            self.obs = obs
+            self.info = info
+            self._get_current_observation()  # internal update
+
+            if terminated[0] or truncated[0] or self.info.get('is_success', [False])[0]:
+                break
+            if np.linalg.norm(pos_err) < 0.01 and np.linalg.norm(rot_err) < 0.01:
+                break
+
+            prev_pos_err = pos_err
+            prev_rot_err = rot_err
+
+        return self._get_current_observation()
+
+    def set_gripper(self, gripper: Literal["open", "close"]) -> list:
+        """
+        Drive the gripper to an open or closed set‑point for a fixed number of steps.
+
+        This is an atomic primitive that directly commands the gripper without moving the arm.
+        It repeats the same gripper command for 10 steps to ensure the action is carried out.
+
+        Args:
+            gripper (Literal["open", "close"]): Desired gripper state.
+
+        Returns:
+            list: Current observation messages after executing the gripper command.
+
+        Raises:
+            ValueError: If `gripper` is not 'open' or 'close'.
+        """
+        if gripper == "open":
+            return self._open_gripper()
+        elif gripper == "close":
+            return self._close_gripper()
+        else:
+            raise ValueError(f"gripper must be 'open' or 'close', got {gripper}")
+
+    def release(self) -> list:
+        """
+        Open the gripper under a release post‑condition.
+
+        This is the "RELEASE" atomic primitive – it simply opens the gripper.
+        It is equivalent to `set_gripper("open")` but named to match the paper's terminology.
+
+        Returns:
+            list: Current observation messages after releasing the gripper.
+        """
+        return self._open_gripper()
+
+    def rotate_wrist(self, target_yaw: float) -> list:
+        """
+        Apply a wrist‑yaw set‑point while holding the current spatial position.
+
+        This is the "ROTATE WRIST" atomic primitive. It keeps the end‑effector at its current
+        x, y, z, roll, and pitch, and only changes the yaw (rotation about the vertical axis).
+
+        Args:
+            target_yaw (float): Desired wrist yaw angle in radians.
+
+        Returns:
+            list: Observation messages after rotating the wrist.
+
+        Note:
+            The function internally calls `move_pose` with the current position and the new yaw.
+        """
+        current_pos = self.obs["robot_state"]["eef"]["pos"][0]
+        current_rpy = self._mat2euler(np.array(self.obs["robot_state"]["eef"]["mat"][0]))
+        target_rpy = np.array([current_rpy[0], current_rpy[1], target_yaw])
+        return self.move_pose(xyz=current_pos.tolist(), rpy=target_rpy.tolist())
+
+    def rotate_pitch(self, target_pitch: float) -> list:
+        """
+        Apply a wrist‑pitch set‑point while holding the current spatial position.
+
+        This is the "ROTATE PITCH" atomic primitive. It keeps the end‑effector at its current
+        x, y, z, roll, and yaw, and only changes the pitch (rotation about the lateral axis).
+
+        Args:
+            target_pitch (float): Desired wrist pitch angle in radians.
+
+        Returns:
+            list: Observation messages after rotating the pitch.
+
+        Note:
+            The function internally calls `move_pose` with the current position and the new pitch.
+        """
+        current_pos = self.obs["robot_state"]["eef"]["pos"][0]
+        current_rpy = self._mat2euler(np.array(self.obs["robot_state"]["eef"]["mat"][0]))
+        target_rpy = np.array([current_rpy[0], target_pitch, current_rpy[2]])
+        return self.move_pose(xyz=current_pos.tolist(), rpy=target_rpy.tolist())
     
     def _pick_and_place(self, object: str, destination: str)->list:
         """
@@ -572,29 +742,30 @@ class LiberoEnv:
         print('DE-ACTIVATE STOVE')
         return self.run_vla_policy(subtask=f"turn off the stove burner")
     
-    def run_vla_policy(self, subtask: str, direction_to_move: Literal["left", "right", "forward", "backward", "up", "down"], gripper_action: Literal["open", "close"])->list:
+    def vla_act(self, prompt: str, max_chunks: int, stop: str)->list:
         """
-        Move the robotic arm in the libero environment by prompting a pretrained vision-language-action model. You must break the environment task into small, short horizon, atomic subtasks, and feed only the next immediate subtask into the VLA.
+        Move the robotic arm in the libero environment by prompting a pretrained vision-language-action model.
 
         Args:
-            subtask: The subtask to feed into the VLA model.
-            direction_to_move: The direction to move the end-effector.
-            gripper_action: If the VLA should open or close the gripper of the robot.
+            prompt: The task to feed into the VLA model.
+            max_chunks: How many action chunks to execute with the VLA model.
+            stop: The task prompt to feed into a success detector model that verifies if the task is completed at each chunk.
         """
-        prompt = subtask
-        max_steps = 50
+        #prompt = subtask
+        max_steps = 50*max_chunks
         max_retries = 0
         #self._open_gripper()
         #self.return_to_home_position()
         print(f'RUN VLA: {prompt}, {max_steps}')
         self._load_vla_policy()
+        self._load_reward_model()
         self.policy.reset()
         self._get_current_observation()
         frames = []
         stage_success = False
         stage_reward = 0.0
         last_reward = 0.0
-        initial_noise = torch.zeros((1, 50, 32))
+        '''initial_noise = torch.zeros((1, 50, 32))
         direction_to_action = {
             "left": torch.tensor([[0.0, 1.0, 0.0],]*50),
             "right": torch.tensor([[0.0, -1.0, 0.0],]*50),
@@ -608,16 +779,16 @@ class LiberoEnv:
             "close": torch.tensor([[1.0,],]*50),
         }
         initial_noise[:, :, :3] = direction_to_action[direction_to_move]
-        initial_noise[:, :, 6:7] = gripper_action_to_action[gripper_action]
+        initial_noise[:, :, 6:7] = gripper_action_to_action[gripper_action]'''
         for i in range(max_steps):
             obs = preprocess_observation(observations=self.obs)
             obs = self.env_preprocessor(obs)
             if i % 50 == 0:
                 frames.append(obs["observation.images.image"])
-                '''rm_result = self._compute_reward_model(prompt=subtask, is_subtask=True, frames=torch.as_tensor(np.concatenate(frames, axis=0)).unsqueeze(0))
+                rm_result = self._compute_reward_model(prompt=stop, is_subtask=True, frames=torch.as_tensor(np.concatenate(frames, axis=0)).unsqueeze(0))
                 stage_success = rm_result[0]
                 stage_reward += rm_result[1]
-                if rm_result[1] > last_reward:
+                '''if rm_result[1] > last_reward:
                     last_reward = rm_result[1]
                     self.last_checkpoint = deepcopy(self.obs)
                 else:
@@ -628,7 +799,7 @@ class LiberoEnv:
                 "observation.state": obs["observation.state"],
                 "task": prompt
             })
-            action = self.policy.select_action(batch=obs, noise=initial_noise.cuda())
+            action = self.policy.select_action(batch=obs)
             action = self.policy_postprocessor(data=action)
             action = {"action": action}
             action = self.env_postprocessor(action)
