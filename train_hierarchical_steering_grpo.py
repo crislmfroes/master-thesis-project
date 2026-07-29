@@ -48,7 +48,7 @@ trainer: GRPOTrainer = None
 # ==========================================
 # 1. Configuration & Constants
 # ==========================================
-MODEL_ID = "Qwen/Qwen3.5-4B"
+MODEL_ID = "Qwen/Qwen3.5-0.8B"
 OUTPUT_DIR = "./vlm-grpo-vla-steering"
 
 
