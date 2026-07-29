@@ -33,9 +33,9 @@ import tqdm
 
 random.seed(123)
 
-policy_path = "crislmfroes/smolvla-libero-90"
+#policy_path = "crislmfroes/smolvla-libero-90"
 dataset_path = "crislmfroes/libero_90_lerobot"
-#policy_path = "lerobot/smolvla_libero"
+policy_path = "lerobot/smolvla_libero"
 #policy = SmolVLAPolicy.from_pretrained(pretrained_name_or_path=policy_path)
 #policy = policy.cpu()
 #policy.config.device = 'cpu'
@@ -53,6 +53,9 @@ trainer: GRPOTrainer = None
 MODEL_ID = "Qwen/Qwen3.5-0.8B"
 OUTPUT_DIR = "./vlm-grpo-vla-steering"
 
+env_counter = 0
+
+BATCH_SIZE = 4
 
 # ==========================================
 # 2. Environment Factory
@@ -60,6 +63,8 @@ OUTPUT_DIR = "./vlm-grpo-vla-steering"
 
 class LiberoEnv:
     def reset(self, **kwargs):
+        global env_counter
+        self.env_counter = env_counter
         env_config = make_env_config(env_type="libero", task=kwargs["task_suite"], task_ids=[kwargs["task_id"],], render_mode="human")
         env = make_env(cfg=env_config)
         self.task_suite = kwargs["task_suite"]
@@ -92,6 +97,7 @@ class LiberoEnv:
         #exit()
         print('TASK:', self._get_libero_task_description())
         self._load_vla_policy()
+        env_counter += 1
         #self._load_reward_model()
         '''for timestep in range(kwargs["start_idx"]):
             print(kwargs["actions"][timestep])
@@ -228,7 +234,7 @@ class LiberoEnv:
         """
         print('GET OBS')
         img = Image.fromarray(cv2.resize(self.obs['pixels']['image'][0][::-1,::-1,:].copy(), (448, 448)))
-        #img.save('debug.jpg')
+        #img.save(f'debug_{self.env_counter % 2}.jpg')
         return_message = [
             {
                 "type": "text",
@@ -576,7 +582,7 @@ class LiberoEnv:
             gripper_action: If the VLA should open or close the gripper of the robot.
         """
         prompt = subtask
-        max_steps = 1
+        max_steps = 50
         max_retries = 0
         #self._open_gripper()
         #self.return_to_home_position()
@@ -617,8 +623,8 @@ class LiberoEnv:
                 else:
                     break'''
             obs = self.policy_preprocessor({
-                "observation.images.top": obs["observation.images.image"],
-                "observation.images.wrist_image": obs["observation.images.image2"],
+                "observation.images.image": obs["observation.images.image"],
+                "observation.images.image2": obs["observation.images.image2"],
                 "observation.state": obs["observation.state"],
                 "task": prompt
             })
@@ -741,7 +747,7 @@ def main():
         output_dir=OUTPUT_DIR,
         learning_rate=5e-6,
         per_device_train_batch_size=1, # Adjust based on your VRAM
-        gradient_accumulation_steps=2,
+        gradient_accumulation_steps=BATCH_SIZE,
         max_steps=100,
         generation_kwargs=dict(
             pad_token_id=processor.tokenizer.pad_token_id
@@ -753,12 +759,12 @@ def main():
         use_liger_kernel=False,
         
         # GRPO Specific configuration settings
-        num_generations=2,             # Number of completions to sample per prompt (G parameter)
+        num_generations=BATCH_SIZE,             # Number of completions to sample per prompt (G parameter)
         #max_prompt_length=512,
         #max_completion_length=16000,    # Space for complex reasoning/thinking block
         #vllm_max_model_length=4096,
         #max_completion_length=4096,
-        max_tool_calling_iterations=500,
+        max_tool_calling_iterations=10,
 
         # Generation Acceleration with colocated vLLM 
         use_vllm=False,
