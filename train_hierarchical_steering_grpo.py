@@ -571,7 +571,7 @@ class LiberoEnv:
             gripper_action: If the VLA should open or close the gripper of the robot.
         """
         prompt = subtask
-        max_steps = 50
+        max_steps = 150
         max_retries = 0
         #self._open_gripper()
         #self.return_to_home_position()
