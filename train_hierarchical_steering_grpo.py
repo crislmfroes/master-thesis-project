@@ -536,8 +536,8 @@ class LiberoEnv:
         allowing the arm to reach a specific pose while holding the gripper state.
 
         Args:
-            xyz (list[float]): Target position as [x, y, z] in world coordinates (meters).
-            rpy (list[float]): Target orientation as [roll, pitch, yaw] in radians.
+            xyz: Target position as [x, y, z] in world coordinates (meters).
+            rpy: Target orientation as [roll, pitch, yaw] in radians.
 
         Returns:
             list: A list of observation messages compatible with the GRPO environment format.
@@ -608,7 +608,7 @@ class LiberoEnv:
         It repeats the same gripper command for 10 steps to ensure the action is carried out.
 
         Args:
-            gripper (Literal["open", "close"]): Desired gripper state.
+            gripper: Desired gripper state.
 
         Returns:
             list: Current observation messages after executing the gripper command.
@@ -643,7 +643,7 @@ class LiberoEnv:
         x, y, z, roll, and pitch, and only changes the yaw (rotation about the vertical axis).
 
         Args:
-            target_yaw (float): Desired wrist yaw angle in radians.
+            target_yaw: Desired wrist yaw angle in radians.
 
         Returns:
             list: Observation messages after rotating the wrist.
@@ -664,7 +664,7 @@ class LiberoEnv:
         x, y, z, roll, and yaw, and only changes the pitch (rotation about the lateral axis).
 
         Args:
-            target_pitch (float): Desired wrist pitch angle in radians.
+            target_pitch: Desired wrist pitch angle in radians.
 
         Returns:
             list: Observation messages after rotating the pitch.
