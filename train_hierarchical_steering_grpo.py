@@ -50,12 +50,12 @@ trainer: GRPOTrainer = None
 # ==========================================
 # 1. Configuration & Constants
 # ==========================================
-MODEL_ID = "Qwen/Qwen3.5-0.8B"
+MODEL_ID = "Qwen/Qwen3.5-9B"
 OUTPUT_DIR = "./vlm-grpo-vla-steering"
 
 env_counter = 0
 
-BATCH_SIZE = 16
+BATCH_SIZE = 2
 
 # ==========================================
 # 2. Environment Factory
