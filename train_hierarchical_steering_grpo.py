@@ -55,7 +55,7 @@ OUTPUT_DIR = "./vlm-grpo-vla-steering"
 
 env_counter = 0
 
-BATCH_SIZE = 32
+BATCH_SIZE = 16
 
 # ==========================================
 # 2. Environment Factory
