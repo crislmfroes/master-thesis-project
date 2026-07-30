@@ -456,6 +456,8 @@ class LiberoEnv:
             return_val =  self.run_vla_policy(subtask=prompt, max_retries=max_retries-1)
             self.prev_obs = deepcopy(self.obs)
             return return_val'''
+        if self.info['is_success'][0] == True:
+            self.task_reward += 1.0
         return [
             *self._get_current_observation(),
             #{
@@ -492,6 +494,8 @@ class LiberoEnv:
             return_val =  self.run_vla_policy(subtask=prompt, max_retries=max_retries-1)
             self.prev_obs = deepcopy(self.obs)
             return return_val'''
+        if self.info['is_success'][0] == True:
+            self.task_reward += 1.0
         return [
             *self._get_current_observation(),
             #{
@@ -537,6 +541,8 @@ class LiberoEnv:
                 break
             prev_pos_error = pos_error
             current_position = self.obs["robot_state"]["eef"]["pos"][0]
+        if self.info['is_success'][0] == True:
+            self.task_reward += 1.0
         return self._get_current_observation()
     
     def _move_pose(self, xyz: list[float], rpy: list[float]) -> list:
