@@ -50,7 +50,7 @@ trainer: GRPOTrainer = None
 # ==========================================
 # 1. Configuration & Constants
 # ==========================================
-MODEL_ID = "Qwen/Qwen3.5-9B"
+MODEL_ID = "Qwen/Qwen3.5-4B"
 OUTPUT_DIR = "./vlm-grpo-vla-steering"
 
 env_counter = 0
@@ -939,7 +939,7 @@ def main():
             pad_token_id=processor.tokenizer.pad_token_id
         ),
         chat_template_kwargs=dict(
-            enable_thinking=True,
+            enable_thinking=False,
         ),
         max_completion_length=1024,#4096,#64*(500/50),
         use_liger_kernel=False,
