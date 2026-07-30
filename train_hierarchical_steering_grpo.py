@@ -50,7 +50,7 @@ trainer: GRPOTrainer = None
 # ==========================================
 # 1. Configuration & Constants
 # ==========================================
-MODEL_ID = "Qwen/Qwen3.5-0.8B"
+MODEL_ID = "Qwen/Qwen3.5-9B"
 OUTPUT_DIR = "./vlm-grpo-vla-steering"
 
 env_counter = 0
@@ -124,11 +124,13 @@ class LiberoEnv:
 
     def _unload_vla_policy(self):
         global policy
-        policy = None
-        self.policy = None
-        gc.collect()
-        torch.cuda.empty_cache()
-        gc.collect()
+        policy = policy.cpu()
+        self.policy = policy
+        #policy = None
+        #self.policy = None
+        #gc.collect()
+        #torch.cuda.empty_cache()
+        #gc.collect()
 
     def _load_reward_model(self):
         global reward_model
@@ -143,7 +145,7 @@ class LiberoEnv:
                 torch_dtype="float16"
             )
             reward_model = RobometerRewardModel.from_pretrained(pretrained_name_or_path="lerobot/Robometer-4B", config=reward_model_config)
-        self.reward_model = reward_model
+        self.reward_model = reward_model.cuda()
         self.reward_preprocessor = RobometerEncoderProcessorStep()
         #reward_preprocessor, reward_postprocessor = make_reward_pre_post_processors(reward_cfg=reward_model.config)
         #self.reward_preprocessor = reward_preprocessor
@@ -152,11 +154,13 @@ class LiberoEnv:
 
     def _unload_reward_model(self):
         global reward_model
-        reward_model = None
-        self.reward_model = None
-        gc.collect()
-        torch.cuda.empty_cache()
-        gc.collect()
+        reward_model = reward_model.cpu()
+        self.reward_model = reward_model
+        #reward_model = None
+        #self.reward_model = None
+        #gc.collect()
+        #torch.cuda.empty_cache()
+        #gc.collect()
 
     def _load_description_generator(self):
         self.description_generator = pipeline(task="image-text-to-text", model="Qwen/Qwen3.5-0.8B")
@@ -177,6 +181,7 @@ class LiberoEnv:
             rm_result = (False, 0.0)
         reward = 100.0*self.task_reward + 10.0*rm_result[1]# + self.stage_reward # + 0.5*self._compute_reward_model(self._get_libero_task_description(), is_subtask=False)[1] + 0.5*self.subtask_reward
         self.prev_obs = deepcopy(self.obs)
+        self._unload_reward_model()
         #if compute_reward_counter > 0 and compute_reward_counter % 2 >= 1:
         #    self._unload_reward_model()
         #compute_reward_counter += 1
@@ -436,6 +441,8 @@ class LiberoEnv:
             self.last_action[0, 5] = 0.0
             self.last_action[0, 6] = 1.0
             obs, reward, terminated, truncated, info = self.env[self.task_suite][self.task_id].step(self.last_action)
+            if timestep % 50 == 0:
+                self.frames.append(obs["pixels"]["robot0_agentview_rgb"])
             self._get_current_observation()
             self.obs = obs
             self.info = info
@@ -470,6 +477,8 @@ class LiberoEnv:
             self.last_action[0, 5] = 0.0
             self.last_action[0, 6] = -1.0
             obs, reward, terminated, truncated, info = self.env[self.task_suite][self.task_id].step(self.last_action)
+            if timestep % 50 == 0:
+                self.frames.append(obs["pixels"]["robot0_agentview_rgb"])
             self._get_current_observation()
             self.obs = obs
             self.info = info
@@ -515,6 +524,8 @@ class LiberoEnv:
             self.last_action[0, 4] = 0.0
             self.last_action[0, 5] = 0.0
             obs, reward, terminated, truncated, info = self.env[self.task_suite][self.task_id].step(self.last_action)
+            if timestep % 50 == 0:
+                self.frames.append(obs["pixels"]["robot0_agentview_rgb"])
             self._get_current_observation()
             self.obs = obs
             self.info = info
@@ -586,6 +597,8 @@ class LiberoEnv:
             self.last_action[0, 6] = self.last_action[0, 6]  # gripper unchanged
 
             obs, reward, terminated, truncated, info = self.env[self.task_suite][self.task_id].step(self.last_action)
+            if _ % 50 == 0:
+                self.frames.append(obs["pixels"]["robot0_agentview_rgb"])
             self.obs = obs
             self.info = info
             self._get_current_observation()  # internal update
@@ -818,7 +831,8 @@ class LiberoEnv:
         #self.task_reward += stage_reward
         self.frames += frames
         self._get_current_observation()
-        #self._unload_vla_policy()
+        self._unload_vla_policy()
+        self._unload_reward_model()
         #rm_result = self._compute_reward_model(prompt=subtask, is_subtask=True, frames=torch.as_tensor(np.concatenate(frames, axis=0)).unsqueeze(0))
         #success = rm_result[0]
         #progress = rm_result[1]*100.0
@@ -924,9 +938,9 @@ def main():
             pad_token_id=processor.tokenizer.pad_token_id
         ),
         chat_template_kwargs=dict(
-            enable_thinking=False,
+            enable_thinking=True,
         ),
-        max_completion_length=64000,#64*(500/50),
+        #max_completion_length=4096,#64*(500/50),
         use_liger_kernel=False,
         
         # GRPO Specific configuration settings
