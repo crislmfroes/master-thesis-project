@@ -443,7 +443,7 @@ class LiberoEnv:
             self.last_action[0, 6] = 1.0
             obs, reward, terminated, truncated, info = self.env[self.task_suite][self.task_id].step(self.last_action)
             if timestep % 50 == 0:
-                self.frames.append(obs["pixels"]["robot0_agentview"])
+                self.frames.append(obs["pixels"]["image"])
             self._get_current_observation()
             self.obs = obs
             self.info = info
@@ -479,7 +479,7 @@ class LiberoEnv:
             self.last_action[0, 6] = -1.0
             obs, reward, terminated, truncated, info = self.env[self.task_suite][self.task_id].step(self.last_action)
             if timestep % 50 == 0:
-                self.frames.append(obs["pixels"]["robot0_agentview"])
+                self.frames.append(obs["pixels"]["image"])
             self._get_current_observation()
             self.obs = obs
             self.info = info
@@ -526,7 +526,7 @@ class LiberoEnv:
             self.last_action[0, 5] = 0.0
             obs, reward, terminated, truncated, info = self.env[self.task_suite][self.task_id].step(self.last_action)
             if timestep % 50 == 0:
-                self.frames.append(obs["pixels"]["robot0_agentview"])
+                self.frames.append(obs["pixels"]["image"])
             self._get_current_observation()
             self.obs = obs
             self.info = info
@@ -599,7 +599,7 @@ class LiberoEnv:
 
             obs, reward, terminated, truncated, info = self.env[self.task_suite][self.task_id].step(self.last_action)
             if _ % 50 == 0:
-                self.frames.append(obs["pixels"]["robot0_agentview"])
+                self.frames.append(obs["pixels"]["image"])
             self.obs = obs
             self.info = info
             self._get_current_observation()  # internal update
