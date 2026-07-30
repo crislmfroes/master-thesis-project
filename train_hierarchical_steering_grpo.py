@@ -76,6 +76,7 @@ class LiberoEnv:
         self.env_postprocessor = env_postprocessor
         obs, info = self.env[self.task_suite][self.task_id].reset(seed=kwargs["seed"])
         print(obs.keys())
+        print(obs["pixels"].keys())
         print(obs['robot_state']['eef'].keys())
         self.obs = obs
         self.prev_obs = deepcopy(obs)
@@ -442,7 +443,7 @@ class LiberoEnv:
             self.last_action[0, 6] = 1.0
             obs, reward, terminated, truncated, info = self.env[self.task_suite][self.task_id].step(self.last_action)
             if timestep % 50 == 0:
-                self.frames.append(obs["pixels"]["robot0_agentview_rgb"])
+                self.frames.append(obs["pixels"]["robot0_agentview"])
             self._get_current_observation()
             self.obs = obs
             self.info = info
@@ -478,7 +479,7 @@ class LiberoEnv:
             self.last_action[0, 6] = -1.0
             obs, reward, terminated, truncated, info = self.env[self.task_suite][self.task_id].step(self.last_action)
             if timestep % 50 == 0:
-                self.frames.append(obs["pixels"]["robot0_agentview_rgb"])
+                self.frames.append(obs["pixels"]["robot0_agentview"])
             self._get_current_observation()
             self.obs = obs
             self.info = info
@@ -525,7 +526,7 @@ class LiberoEnv:
             self.last_action[0, 5] = 0.0
             obs, reward, terminated, truncated, info = self.env[self.task_suite][self.task_id].step(self.last_action)
             if timestep % 50 == 0:
-                self.frames.append(obs["pixels"]["robot0_agentview_rgb"])
+                self.frames.append(obs["pixels"]["robot0_agentview"])
             self._get_current_observation()
             self.obs = obs
             self.info = info
@@ -598,7 +599,7 @@ class LiberoEnv:
 
             obs, reward, terminated, truncated, info = self.env[self.task_suite][self.task_id].step(self.last_action)
             if _ % 50 == 0:
-                self.frames.append(obs["pixels"]["robot0_agentview_rgb"])
+                self.frames.append(obs["pixels"]["robot0_agentview"])
             self.obs = obs
             self.info = info
             self._get_current_observation()  # internal update
@@ -940,7 +941,7 @@ def main():
         chat_template_kwargs=dict(
             enable_thinking=True,
         ),
-        #max_completion_length=4096,#64*(500/50),
+        max_completion_length=1024,#4096,#64*(500/50),
         use_liger_kernel=False,
         
         # GRPO Specific configuration settings
