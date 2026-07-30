@@ -839,7 +839,7 @@ class LiberoEnv:
         self.frames += frames
         self._get_current_observation()
         self._unload_vla_policy()
-        self._unload_reward_model()
+        #self._unload_reward_model()
         #rm_result = self._compute_reward_model(prompt=subtask, is_subtask=True, frames=torch.as_tensor(np.concatenate(frames, axis=0)).unsqueeze(0))
         #success = rm_result[0]
         #progress = rm_result[1]*100.0
