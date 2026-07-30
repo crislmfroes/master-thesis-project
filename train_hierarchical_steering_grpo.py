@@ -795,10 +795,8 @@ class LiberoEnv:
         initial_noise[:, :, :3] = direction_to_action[direction_to_move]
         initial_noise[:, :, 6:7] = gripper_action_to_action[gripper_action]'''
         for i in range(max_steps):
-            obs = preprocess_observation(observations=self.obs)
-            obs = self.env_preprocessor(obs)
             if i % 50 == 0:
-                frames.append(obs["observation.images.image"])
+                frames.append(self.obs["pixels"]["image"])
                 rm_result = self._compute_reward_model(prompt=stop, is_subtask=True, frames=torch.as_tensor(np.concatenate(frames, axis=0)).unsqueeze(0))
                 stage_success = rm_result[0]
                 stage_reward += rm_result[1]
@@ -807,6 +805,8 @@ class LiberoEnv:
                     self.last_checkpoint = deepcopy(self.obs)
                 else:
                     break'''
+            obs = preprocess_observation(observations=self.obs)
+            obs = self.env_preprocessor(obs)
             obs = self.policy_preprocessor({
                 "observation.images.top": obs["observation.images.image"],
                 "observation.images.wrist_image": obs["observation.images.image2"],
