@@ -539,7 +539,7 @@ class LiberoEnv:
             current_position = self.obs["robot_state"]["eef"]["pos"][0]
         return self._get_current_observation()
     
-    def move_pose(self, xyz: list[float], rpy: list[float]) -> list:
+    def _move_pose(self, xyz: list[float], rpy: list[float]) -> list:
         """
         Move the end‑effector to a target Cartesian position and orientation (roll‑pitch‑yaw)
         using a PD controller for both translation and rotation.
@@ -649,7 +649,7 @@ class LiberoEnv:
         """
         return self._open_gripper()
 
-    def rotate_wrist(self, target_yaw: float) -> list:
+    def _rotate_wrist(self, target_yaw: float) -> list:
         """
         Apply a wrist‑yaw set‑point while holding the current spatial position.
 
@@ -670,7 +670,7 @@ class LiberoEnv:
         target_rpy = np.array([current_rpy[0], current_rpy[1], target_yaw])
         return self.move_pose(xyz=current_pos.tolist(), rpy=target_rpy.tolist())
 
-    def rotate_pitch(self, target_pitch: float) -> list:
+    def _rotate_pitch(self, target_pitch: float) -> list:
         """
         Apply a wrist‑pitch set‑point while holding the current spatial position.
 
