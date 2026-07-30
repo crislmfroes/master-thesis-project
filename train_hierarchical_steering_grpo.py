@@ -33,9 +33,9 @@ import tqdm
 
 random.seed(123)
 
-policy_path = "crislmfroes/smolvla-libero-90"
+#policy_path = "crislmfroes/smolvla-libero-90"
 dataset_path = "crislmfroes/libero_90_lerobot"
-#policy_path = "lerobot/smolvla_libero"
+policy_path = "lerobot/smolvla_libero"
 #policy = SmolVLAPolicy.from_pretrained(pretrained_name_or_path=policy_path)
 #policy = policy.cpu()
 #policy.config.device = 'cpu'
@@ -808,8 +808,8 @@ class LiberoEnv:
             obs = preprocess_observation(observations=self.obs)
             obs = self.env_preprocessor(obs)
             obs = self.policy_preprocessor({
-                "observation.images.top": obs["observation.images.image"],
-                "observation.images.wrist_image": obs["observation.images.image2"],
+                "observation.images.camera1": obs["observation.images.image"],
+                "observation.images.camera2": obs["observation.images.image2"],
                 "observation.state": obs["observation.state"],
                 "task": prompt
             })
