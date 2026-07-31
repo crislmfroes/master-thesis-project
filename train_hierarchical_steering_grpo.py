@@ -55,7 +55,7 @@ OUTPUT_DIR = "./vlm-grpo-vla-steering"
 
 env_counter = 0
 
-BATCH_SIZE = 16
+BATCH_SIZE = 4
 
 # ==========================================
 # 2. Environment Factory
@@ -940,7 +940,7 @@ def main():
         learning_rate=5e-6,
         per_device_train_batch_size=1, # Adjust based on your VRAM
         gradient_accumulation_steps=BATCH_SIZE,
-        max_steps=100,
+        max_steps=1000,
         generation_kwargs=dict(
             pad_token_id=processor.tokenizer.pad_token_id
         ),
