@@ -866,7 +866,7 @@ def preprocess_dataset():
     dataset_metadata = LeRobotDatasetMetadata(repo_id=dataset_path)
     dataset = []
     #env = LiberoEnv()
-    for seed in tqdm.trange(100):
+    for seed in tqdm.trange(1000):
         task_id = random.choice(list(range(10)))
         task_suite = "libero_10"
         '''env.reset(task_suite=task_suite, task_id=task_id, seed=seed, start_idx=0)
@@ -937,7 +937,7 @@ def main():
     # Configure GRPO Engine
     training_args = GRPOConfig(
         output_dir=OUTPUT_DIR,
-        learning_rate=5e-6,
+        learning_rate=5e-5,
         per_device_train_batch_size=1, # Adjust based on your VRAM
         gradient_accumulation_steps=BATCH_SIZE,
         max_steps=1000,
