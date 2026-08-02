@@ -878,7 +878,7 @@ def preprocess_dataset():
                     {
                         "role": "system",
                         "content": [
-                            {"type": "text", "text": f"You are the high level planner component of a hierarchical vision-language-action model controlling a robotic arm. DO NOT THINK OR TALK, JUST EXECUTE TOOL CALLS!"}
+                            {"type": "text", "text": f"You are the high level planner component of a hierarchical vision-language-action model controlling a robotic arm." } # + " DO NOT THINK OR TALK, JUST EXECUTE TOOL CALLS!"}
                         ]
                     },
                     {
@@ -945,7 +945,7 @@ def main():
             pad_token_id=processor.tokenizer.pad_token_id
         ),
         chat_template_kwargs=dict(
-            enable_thinking=False,
+            enable_thinking=True,
         ),
         save_steps=10,
         max_completion_length=1024,#4096,#64*(500/50),
