@@ -506,7 +506,7 @@ class LiberoEnv:
     
     def move_to(self, xyz: list[float])->list:
         """
-        Moves the end-effector of the robotic arm to the target xyz position.
+        Moves the end-effector of the robotic arm to the target xyz position. Use this to approach relevant objects before calling the VLA policy function.
 
         Args:
             xyz: The target position to move the end-effector.
@@ -764,11 +764,11 @@ class LiberoEnv:
     
     def vla_act(self, prompt: str, max_chunks: int, stop: str)->list:
         """
-        Move the robotic arm in the libero environment by prompting a pretrained vision-language-action model.
+        Move the robotic arm in the libero environment by prompting a pretrained vision-language-action model. Use this for contact-rich object interaction, after having moved the arm close to the object.
 
         Args:
             prompt: The task to feed into the VLA model.
-            max_chunks: How many action chunks to execute with the VLA model.
+            max_chunks: How many action chunks to execute with the VLA model. Each chunk runs for roughly 5 seconds in the environment.
             stop: The task prompt to feed into a success detector model that verifies if the task is completed at each chunk.
         """
         #prompt = subtask
@@ -947,6 +947,7 @@ def main():
         chat_template_kwargs=dict(
             enable_thinking=False,
         ),
+        save_steps=10,
         max_completion_length=1024,#4096,#64*(500/50),
         use_liger_kernel=False,
         
