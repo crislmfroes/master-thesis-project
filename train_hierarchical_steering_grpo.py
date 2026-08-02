@@ -867,7 +867,7 @@ def preprocess_dataset():
     dataset = []
     #env = LiberoEnv()
     for seed in tqdm.trange(1000):
-        task_id = random.choice(list(range(10)))
+        task_id = random.choice(list(range(90)))
         task_suite = "libero_10"
         '''env.reset(task_suite=task_suite, task_id=task_id, seed=seed, start_idx=0)
         for j in range(10):
@@ -888,7 +888,7 @@ def preprocess_dataset():
                         ]
                     }
                 ],
-                "task_suite": "libero_10",
+                "task_suite": "libero_90",
                 "task_id": task_id,
                 "seed": seed,
                 #"actions": env.actions,
