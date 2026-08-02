@@ -948,7 +948,7 @@ def main():
             enable_thinking=True,
         ),
         save_steps=10,
-        max_completion_length=1024,#4096,#64*(500/50),
+        max_completion_length=4096,#4096,#64*(500/50),
         use_liger_kernel=False,
         
         # GRPO Specific configuration settings
