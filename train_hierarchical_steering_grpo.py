@@ -537,7 +537,7 @@ class LiberoEnv:
             print(terminated)
             print(truncated)
             print(info)
-            if terminated[0] or truncated[0] or self.info['is_success'][0] or np.linalg.norm(pos_error) <= 0.05:
+            if terminated[0] or truncated[0] or self.info['is_success'][0] or np.linalg.norm(target_position - current_position) <= 0.05:
                 break
             prev_pos_error = pos_error
             current_position = self.obs["robot_state"]["eef"]["pos"][0]
