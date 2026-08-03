@@ -98,7 +98,7 @@ class LiberoEnv:
         #print(self.env[self.task_suite][self.task_id])
         #exit()
         print('TASK:', self._get_libero_task_description())
-        #self._load_vla_policy()
+        self._load_vla_policy()
         env_counter += 1
         #self._load_reward_model()
         '''for timestep in range(kwargs["start_idx"]):
