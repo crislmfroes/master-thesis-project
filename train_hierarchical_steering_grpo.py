@@ -50,7 +50,7 @@ trainer: GRPOTrainer = None
 # ==========================================
 # 1. Configuration & Constants
 # ==========================================
-MODEL_ID = "Alibaba-DAMO-Academy/RynnBrain1.1-2B"
+MODEL_ID = "Qwen/Qwen3.5-9B"
 OUTPUT_DIR = "./vlm-grpo-vla-steering"
 
 env_counter = 0
@@ -937,7 +937,7 @@ def main():
     # Configure GRPO Engine
     training_args = GRPOConfig(
         output_dir=OUTPUT_DIR,
-        learning_rate=5e-5,
+        learning_rate=5e-6,
         per_device_train_batch_size=1, # Adjust based on your VRAM
         gradient_accumulation_steps=BATCH_SIZE,
         max_steps=1000,
@@ -960,7 +960,8 @@ def main():
         max_tool_calling_iterations=10,
 
         # Generation Acceleration with colocated vLLM 
-        use_vllm=False,
+        use_vllm=True,
+        vllm_mode="server",
         #vllm_mode="colocate",          # Shares GPU seamlessly inside the trainer process
         #vllm_gpu_memory_utilization=0.1, 
         
