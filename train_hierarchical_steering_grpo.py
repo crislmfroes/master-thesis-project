@@ -50,7 +50,7 @@ trainer: GRPOTrainer = None
 # ==========================================
 # 1. Configuration & Constants
 # ==========================================
-MODEL_ID = "Qwen/Qwen3.5-0.8B"
+MODEL_ID = "tencent/HY-Embodied-0.5-X"
 OUTPUT_DIR = "./vlm-grpo-vla-steering"
 
 env_counter = 0
