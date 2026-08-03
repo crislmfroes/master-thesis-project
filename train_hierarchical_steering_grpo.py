@@ -960,8 +960,8 @@ def main():
         max_tool_calling_iterations=10,
 
         # Generation Acceleration with colocated vLLM 
-        use_vllm=True,
-        vllm_mode="server",
+        use_vllm=False,
+        #vllm_mode="server",
         #vllm_mode="colocate",          # Shares GPU seamlessly inside the trainer process
         #vllm_gpu_memory_utilization=0.1, 
         
