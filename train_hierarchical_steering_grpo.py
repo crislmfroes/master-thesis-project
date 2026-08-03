@@ -50,7 +50,7 @@ trainer: GRPOTrainer = None
 # ==========================================
 # 1. Configuration & Constants
 # ==========================================
-MODEL_ID = "tencent/HY-Embodied-0.5-X"
+MODEL_ID = "Alibaba-DAMO-Academy/RynnBrain1.1-2B"
 OUTPUT_DIR = "./vlm-grpo-vla-steering"
 
 env_counter = 0
@@ -941,9 +941,9 @@ def main():
         per_device_train_batch_size=1, # Adjust based on your VRAM
         gradient_accumulation_steps=BATCH_SIZE,
         max_steps=1000,
-        generation_kwargs=dict(
-            pad_token_id=processor.tokenizer.pad_token_id
-        ),
+        #generation_kwargs=dict(
+        #    pad_token_id=processor.tokenizer.pad_token_id
+        #),
         chat_template_kwargs=dict(
             enable_thinking=True,
         ),
