@@ -318,8 +318,8 @@ class LiberoEnv:
         ]'''
     
     def _mat2euler(self, mat: np.ndarray):
-        #return Rotation.from_matrix(matrix=mat).as_euler(seq="xyz")
-        return mat2euler(rmat=mat)
+        return Rotation.from_matrix(matrix=mat).as_euler(seq="xyz")
+        #return mat2euler(rmat=mat)
     
     def _return_to_home_position(self)->list:
         """
