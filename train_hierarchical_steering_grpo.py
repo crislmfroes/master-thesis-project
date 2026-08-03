@@ -56,7 +56,7 @@ OUTPUT_DIR = "./vlm-grpo-vla-steering"
 
 env_counter = 0
 
-BATCH_SIZE = 2
+BATCH_SIZE = 4
 
 # ==========================================
 # 2. Environment Factory
@@ -175,7 +175,7 @@ class LiberoEnv:
     
     def get_reward(self)->float:
         global compute_reward_counter
-        #self._unload_vla_policy()
+        self._unload_vla_policy()
         self._load_reward_model()
         if len(self.frames) > 0:
             rm_result = self._compute_reward_model(prompt=self._get_libero_task_description(), is_subtask=False, frames=torch.as_tensor(np.concatenate(self.frames, axis=0)).unsqueeze(0))
@@ -764,9 +764,9 @@ class LiberoEnv:
         print('DE-ACTIVATE STOVE')
         return self.run_vla_policy(subtask=f"turn off the stove burner")
     
-    def _vla_act(self, prompt: str, max_chunks: int, stop: str)->list:
+    def vla_act(self, prompt: str, max_chunks: int, stop: str)->list:
         """
-        Move the robotic arm in the libero environment by prompting a pretrained vision-language-action model. Use this for contact-rich object interaction, after having moved the arm close to the object.
+        Move the robotic arm in the libero environment by prompting a pretrained vision-language-action model.
 
         Args:
             prompt: The task to feed into the VLA model.
@@ -950,7 +950,7 @@ def main():
             enable_thinking=False,
         ),
         save_steps=10,
-        max_completion_length=4096,#4096,#64*(500/50),
+        max_completion_length=1024,#4096,#64*(500/50),
         use_liger_kernel=False,
         
         # GRPO Specific configuration settings
