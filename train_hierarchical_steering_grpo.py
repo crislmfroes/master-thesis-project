@@ -19,6 +19,7 @@ from lerobot.rewards.robometer.processor_robometer import RobometerEncoderProces
 from lerobot.envs.utils import preprocess_observation
 from lerobot.types import TransitionKey
 from scipy.spatial.transform import Rotation
+from robosuite.utils.transform_utils import pose2mat, mat2pose, mat2euler
 
 from copy import deepcopy
 from PIL import Image
@@ -174,15 +175,15 @@ class LiberoEnv:
     
     def get_reward(self)->float:
         global compute_reward_counter
-        self._unload_vla_policy()
-        self._load_reward_model()
-        if len(self.frames) > 0:
+        #self._unload_vla_policy()
+        #self._load_reward_model()
+        if False and len(self.frames) > 0:
             rm_result = self._compute_reward_model(prompt=self._get_libero_task_description(), is_subtask=False, frames=torch.as_tensor(np.concatenate(self.frames, axis=0)).unsqueeze(0))
         else:
             rm_result = (False, 0.0)
         reward = 100.0*self.task_reward + 10.0*rm_result[1]# + self.stage_reward # + 0.5*self._compute_reward_model(self._get_libero_task_description(), is_subtask=False)[1] + 0.5*self.subtask_reward
         self.prev_obs = deepcopy(self.obs)
-        self._unload_reward_model()
+        #self._unload_reward_model()
         #if compute_reward_counter > 0 and compute_reward_counter % 2 >= 1:
         #    self._unload_reward_model()
         #compute_reward_counter += 1
@@ -317,7 +318,8 @@ class LiberoEnv:
         ]'''
     
     def _mat2euler(self, mat: np.ndarray):
-        return Rotation.from_matrix(matrix=mat).as_euler(seq="xyz")
+        #return Rotation.from_matrix(matrix=mat).as_euler(seq="xyz")
+        return mat2euler(rmat=mat)
     
     def _return_to_home_position(self)->list:
         """
@@ -506,7 +508,7 @@ class LiberoEnv:
     
     def move_to(self, xyz: list[float])->list:
         """
-        Moves the end-effector of the robotic arm to the target xyz position. Use this to approach relevant objects before calling the VLA policy function.
+        Moves the end-effector of the robotic arm to the target xyz position.
 
         Args:
             xyz: The target position to move the end-effector.
@@ -537,7 +539,7 @@ class LiberoEnv:
             print(terminated)
             print(truncated)
             print(info)
-            if terminated[0] or truncated[0] or self.info['is_success'][0] or np.linalg.norm(target_position - current_position) <= 0.05:
+            if terminated[0] or truncated[0] or self.info['is_success'][0] or np.linalg.norm(target_position - current_position) <= 0.01:
                 break
             prev_pos_error = pos_error
             current_position = self.obs["robot_state"]["eef"]["pos"][0]
@@ -545,7 +547,7 @@ class LiberoEnv:
             self.task_reward += 1.0
         return self._get_current_observation()
     
-    def _move_pose(self, xyz: list[float], rpy: list[float]) -> list:
+    def move_pose(self, xyz: list[float], rpy: list[float]) -> list:
         """
         Move the end‑effector to a target Cartesian position and orientation (roll‑pitch‑yaw)
         using a PD controller for both translation and rotation.
@@ -612,7 +614,7 @@ class LiberoEnv:
 
             if terminated[0] or truncated[0] or self.info.get('is_success', [False])[0]:
                 break
-            if np.linalg.norm(pos_err) < 0.01 and np.linalg.norm(rot_err) < 0.01:
+            if np.linalg.norm(current_pos - target_pos) < 0.01 and np.linalg.norm(current_rpy - target_rpy) < 0.01:
                 break
 
             prev_pos_err = pos_err
@@ -655,7 +657,7 @@ class LiberoEnv:
         """
         return self._open_gripper()
 
-    def _rotate_wrist(self, target_yaw: float) -> list:
+    def rotate_wrist(self, target_yaw: float) -> list:
         """
         Apply a wrist‑yaw set‑point while holding the current spatial position.
 
@@ -676,7 +678,7 @@ class LiberoEnv:
         target_rpy = np.array([current_rpy[0], current_rpy[1], target_yaw])
         return self.move_pose(xyz=current_pos.tolist(), rpy=target_rpy.tolist())
 
-    def _rotate_pitch(self, target_pitch: float) -> list:
+    def rotate_pitch(self, target_pitch: float) -> list:
         """
         Apply a wrist‑pitch set‑point while holding the current spatial position.
 
@@ -762,7 +764,7 @@ class LiberoEnv:
         print('DE-ACTIVATE STOVE')
         return self.run_vla_policy(subtask=f"turn off the stove burner")
     
-    def vla_act(self, prompt: str, max_chunks: int, stop: str)->list:
+    def _vla_act(self, prompt: str, max_chunks: int, stop: str)->list:
         """
         Move the robotic arm in the libero environment by prompting a pretrained vision-language-action model. Use this for contact-rich object interaction, after having moved the arm close to the object.
 
