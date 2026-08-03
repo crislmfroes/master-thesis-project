@@ -521,7 +521,7 @@ class LiberoEnv:
         dt = 0.002
         prev_pos_error = 0.0
         prev_rot_error = 0.0
-        for timestep in range(500): #while np.linalg.norm(target_position - current_position) > 0.05 or np.linalg.norm(target_rotation - current_rotation) > 0.05:
+        for timestep in range(50): #while np.linalg.norm(target_position - current_position) > 0.05 or np.linalg.norm(target_rotation - current_rotation) > 0.05:
             pos_error = timestep*(target_position - current_position)/150.0
             pos_derivative = (pos_error - prev_pos_error) / dt
             pos_output = (kp * pos_error) + (kd * pos_derivative)
@@ -579,7 +579,7 @@ class LiberoEnv:
         prev_pos_err = np.zeros(3)
         prev_rot_err = np.zeros(3)
 
-        max_steps = 500
+        max_steps = 50
 
         def get_current_rpy():
             mat = np.array(self.obs["robot_state"]["eef"]["mat"][0])
