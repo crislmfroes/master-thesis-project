@@ -947,7 +947,7 @@ def main():
         #    pad_token_id=processor.tokenizer.pad_token_id
         #),
         chat_template_kwargs=dict(
-            enable_thinking=True,
+            enable_thinking=False,
         ),
         save_steps=10,
         max_completion_length=4096,#4096,#64*(500/50),
