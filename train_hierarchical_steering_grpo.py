@@ -939,7 +939,7 @@ def main():
     # Configure GRPO Engine
     training_args = GRPOConfig(
         output_dir=OUTPUT_DIR,
-        learning_rate=5e-6,
+        learning_rate=5e-5,
         per_device_train_batch_size=1, # Adjust based on your VRAM
         gradient_accumulation_steps=BATCH_SIZE,
         max_steps=1000,
