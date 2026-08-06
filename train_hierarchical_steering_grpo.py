@@ -980,7 +980,7 @@ def main():
         learning_rate=5e-5,
         per_device_train_batch_size=1, # Adjust based on your VRAM
         gradient_accumulation_steps=BATCH_SIZE,
-        max_steps=1000,
+        max_steps=250,
         #generation_kwargs=dict(
         #    pad_token_id=processor.tokenizer.pad_token_id
         #),
