@@ -859,7 +859,7 @@ class LiberoEnv:
                 "observation.state": obs["observation.state"],
                 "task": prompt
             })
-            action = self.policy.select_action(batch=obs)
+            action = self.policy.select_action(batch=obs, noise=torch.zeros(size=(1, 50, 32), device=self.policy.model.vlm_with_expert.vlm.device))
             action = self.policy_postprocessor(data=action)
             action = {"action": action}
             action = self.env_postprocessor(action)
@@ -907,8 +907,7 @@ def preprocess_dataset():
     dataset = []
     #env = LiberoEnv()
     for seed in tqdm.trange(1000):
-        task_id = random.choice(list(range(90)))
-        task_suite = "libero_10"
+        task_id = random.choice(list(range(10)))
         '''env.reset(task_suite=task_suite, task_id=task_id, seed=seed, start_idx=0)
         for j in range(10):
             env.run_vla_policy(subtask=env._get_libero_task_description())'''
@@ -928,7 +927,7 @@ def preprocess_dataset():
                         ]
                     }
                 ],
-                "task_suite": "libero_90",
+                "task_suite": "libero_10",
                 "task_id": task_id,
                 "seed": seed,
                 #"actions": env.actions,
