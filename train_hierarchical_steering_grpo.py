@@ -20,6 +20,7 @@ from lerobot.envs.utils import preprocess_observation
 from lerobot.types import TransitionKey
 from scipy.spatial.transform import Rotation
 from robosuite.utils.transform_utils import pose2mat, mat2pose, mat2euler
+from robosuite.utils.camera_utils import get_camera_extrinsic_matrix
 
 from copy import deepcopy
 from PIL import Image
@@ -267,7 +268,7 @@ class LiberoEnv:
         rpy = self._mat2euler(mat)                               # (roll, pitch, yaw) in radians
         return_message.append({
             "type": "text",
-            "text": f"End‑effector position (x,y,z): {pos.tolist()}, orientation (roll,pitch,yaw): {rpy.tolist()}"
+            "text": f"End‑effector position in robot base frame (x,y,z): {pos.tolist()}, orientation (roll,pitch,yaw): {rpy.tolist()}"
         })
 
         if generate_text_description:
@@ -455,7 +456,7 @@ class LiberoEnv:
         #self.subtask_reward += reward
         self.prev_obs = deepcopy(self.obs)
         '''if (success == False and not (terminated[0] or truncated[0] or self.info['is_success'][0])) and (max_retries > 0):
-            return_val =  self.run_vla_policy(subtask=prompt, max_retries=max_retries-1)
+            return_val =  self.vla_act(subtask=prompt, max_retries=max_retries-1)
             self.prev_obs = deepcopy(self.obs)
             return return_val'''
         if self.info['is_success'][0] == True:
@@ -493,7 +494,7 @@ class LiberoEnv:
         #self.subtask_reward += reward
         self.prev_obs = deepcopy(self.obs)
         '''if (success == False and not (terminated[0] or truncated[0] or self.info['is_success'][0])) and (max_retries > 0):
-            return_val =  self.run_vla_policy(subtask=prompt, max_retries=max_retries-1)
+            return_val =  self.vla_act(subtask=prompt, max_retries=max_retries-1)
             self.prev_obs = deepcopy(self.obs)
             return return_val'''
         if self.info['is_success'][0] == True:
@@ -504,6 +505,35 @@ class LiberoEnv:
             #    "type": "text",
             #    "text": f"Subtask completed: {success}"
             #}
+        ]
+    
+    def convert_xyz_from_camera_to_robot(self, camera_xyz: list[float])->list:
+        """
+        Converts a 3D point in the camera frame to the frame used by 'move_to' and 'move_pose'.
+
+        Args:
+            camera_xyz: The 3d point in camera frame to be converted to the robot frame.
+        """
+        camera_xyz = np.asarray(camera_xyz)
+        T_cam_to_world = get_camera_extrinsic_matrix(self.env[self.task_suite][self.task_id].envs[0].unwrapped._env.sim, camera_name="agentview")
+
+        # 2. Define a 3D point in the camera frame (X, Y, Z)
+        point_cam = np.array([0.1, -0.2, 0.5]) 
+
+        # 3. Convert to homogeneous coordinates by appending 1
+        point_cam_homo = np.append(point_cam, 1.0)
+
+        # 4. Perform matrix multiplication to get the point in the world frame
+        point_world_homo = T_cam_to_world @ point_cam_homo
+
+        # 5. Extract the final 3D world coordinates
+        point_world = point_world_homo[:3]
+
+        return [
+            {
+                "type": "text",
+                "text": f"xyz point in robot IK base frame: {point_world.tolist()}"
+            }
         ]
     
     def move_to(self, xyz: list[float])->list:
@@ -708,7 +738,8 @@ class LiberoEnv:
             destination: The location to place the object on.
         """
         print('PICK AND PLACE')
-        return self.run_vla_policy(subtask=f"put the {object} on the {destination}")
+        subtask = f"put the {object} on the {destination}"
+        return self.vla_act(prompt=subtask, max_chunks=10, stop=subtask)
     
     def _open_drawer(self, drawer: str)->list:
         """
@@ -718,7 +749,9 @@ class LiberoEnv:
             drawer: The specific drawer to open.
         """
         print('OPEN DRAWER')
-        return self.run_vla_policy(subtask=f"open the {drawer} drawer")
+        subtask = f"open the {drawer} drawer"
+        return self.vla_act(prompt=subtask, max_chunks=10, stop=subtask)
+
     
     def _close_drawer(self, drawer: str)->list:
         """
@@ -728,7 +761,8 @@ class LiberoEnv:
             drawer: The specific drawer to close.
         """
         print('CLOSE DRAWER')
-        return self.run_vla_policy(subtask=f"close the {drawer} drawer")
+        subtask = f"close the {drawer} drawer"
+        return self.vla_act(prompt=subtask, max_chunks=10, stop=subtask)
     
     def _open_door(self, door: str)->list:
         """
@@ -738,7 +772,8 @@ class LiberoEnv:
             door: The specific door to open.
         """
         print('OPEN DOOR')
-        return self.run_vla_policy(subtask=f"open the {door} door")
+        subtask = f"open the {door} door"
+        return self.vla_act(prompt=subtask, max_chunks=10, stop=subtask)
     
     def _close_door(self, door: str)->list:
         """
@@ -748,21 +783,24 @@ class LiberoEnv:
             door: The specific door to close.
         """
         print('CLOSE DOOR')
-        return self.run_vla_policy(subtask=f"close the {door} door")
+        subtask = f"close the {door} door"
+        return self.vla_act(prompt=subtask, max_chunks=10, stop=subtask)
     
     def _activate_stove(self)->list:
         """
         Activates the stove burner.
         """
         print('ACTIVATE STOVE')
-        return self.run_vla_policy(subtask=f"turn on the stove burner")
+        subtask = f"turn on the stove burner"
+        return self.vla_act(prompt=subtask, max_chunks=10, stop=subtask)
     
     def _deactivate_stove(self)->list:
         """
         De-activates the stove burner.
         """
         print('DE-ACTIVATE STOVE')
-        return self.run_vla_policy(subtask=f"turn off the stove burner")
+        subtask = f"turn off the stove burner"
+        return self.vla_act(prompt=subtask, max_chunks=10, stop=subtask)
     
     def vla_act(self, prompt: str, max_chunks: int, stop: str)->list:
         """
@@ -848,7 +886,7 @@ class LiberoEnv:
         #self.subtask_reward += reward
         self.prev_obs = deepcopy(self.obs)
         '''if (success == False and not (terminated[0] or truncated[0] or self.info['is_success'][0])) and (max_retries > 0):
-            return_val =  self.run_vla_policy(subtask=prompt, max_retries=max_retries-1)
+            return_val =  self.vla_act(subtask=prompt, max_retries=max_retries-1)
             self.prev_obs = deepcopy(self.obs)
             return return_val'''
         return [
