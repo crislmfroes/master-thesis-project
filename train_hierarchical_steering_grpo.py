@@ -729,7 +729,7 @@ class LiberoEnv:
         target_rpy = np.array([current_rpy[0], target_pitch, current_rpy[2]])
         return self.move_pose(xyz=current_pos.tolist(), rpy=target_rpy.tolist())
     
-    def _pick_and_place(self, object: str, destination: str)->list:
+    def pick_and_place(self, object: str, destination: str)->list:
         """
         Pick an object with the robotic arm, and place it on the destination
 
@@ -741,7 +741,7 @@ class LiberoEnv:
         subtask = f"put the {object} on the {destination}"
         return self.vla_act(prompt=subtask, max_chunks=10, stop=subtask)
     
-    def _open_drawer(self, drawer: str)->list:
+    def open_drawer(self, drawer: str)->list:
         """
         Open the specified drawer with the robotic arm.
 
@@ -753,7 +753,7 @@ class LiberoEnv:
         return self.vla_act(prompt=subtask, max_chunks=10, stop=subtask)
 
     
-    def _close_drawer(self, drawer: str)->list:
+    def close_drawer(self, drawer: str)->list:
         """
         Close the specified drawer with the robotic arm.
 
@@ -764,7 +764,7 @@ class LiberoEnv:
         subtask = f"close the {drawer} drawer"
         return self.vla_act(prompt=subtask, max_chunks=10, stop=subtask)
     
-    def _open_door(self, door: str)->list:
+    def open_door(self, door: str)->list:
         """
         Open the specified door with the robotic arm.
 
@@ -775,7 +775,7 @@ class LiberoEnv:
         subtask = f"open the {door} door"
         return self.vla_act(prompt=subtask, max_chunks=10, stop=subtask)
     
-    def _close_door(self, door: str)->list:
+    def close_door(self, door: str)->list:
         """
         Close the specified door with the robotic arm.
 
@@ -786,7 +786,7 @@ class LiberoEnv:
         subtask = f"close the {door} door"
         return self.vla_act(prompt=subtask, max_chunks=10, stop=subtask)
     
-    def _activate_stove(self)->list:
+    def activate_stove(self)->list:
         """
         Activates the stove burner.
         """
@@ -794,7 +794,7 @@ class LiberoEnv:
         subtask = f"turn on the stove burner"
         return self.vla_act(prompt=subtask, max_chunks=10, stop=subtask)
     
-    def _deactivate_stove(self)->list:
+    def deactivate_stove(self)->list:
         """
         De-activates the stove burner.
         """
